@@ -1,194 +1,303 @@
+library(dplyr)
+library(readr)
+library(stringr)
+
 check_code <- function(code, manual, R1_metadata, R2_metadata) {
-  # Checks that the code and manual are provided correctly and extracts the subject ID (code)
-  
+#' Check the subject ID code and return corresponding Room 1 and Room 2 codes.
+#' 
+#' @param code Type of code to use: "id", "id+comment", or "manual".
+#' @param manual A list of custom codes for Room 1 and Room 2, required if `code` is "manual".
+#' @param R1_metadata, R2_metadata DataFrames for metadata of Room 1 and Room 2, containing "Subject ID" and "Comments".
+#' @return A list containing the codes for Room 1 and Room 2.
   if (code == "id") {
-    code_1 <- R1_metadata[["Subject ID"]][1]
-    code_2 <- R2_metadata[["Subject ID"]][1]
-    
+    code_1 <- R1_metadata$`Subject ID`[1]
+    code_2 <- R2_metadata$`Subject ID`[1]
   } else if (code == "id+comment") {
-    code_1 <- paste(R1_metadata[["Subject ID"]][1], R1_metadata[["Comments"]][1], sep = "_")
-    code_2 <- paste(R2_metadata[["Subject ID"]][1], R2_metadata[["Comments"]][1], sep = "_")
-    
-  } else if (code == "manual" || !is.null(manual)) {
-    tryCatch({
-      code_1 <- manual[[1]]
-      code_2 <- manual[[2]]
-    }, error = function(e) {
-      stop("You have tried to enter a manual code. Please ensure it's a list, e.g., c('1234_visit1', '5678_visit1'), where the first entry is for subject in room 1 and the second for subject in room 2.")
-    })
-    
+    code_1 <- paste0(R1_metadata$`Subject ID`[1], '_', R1_metadata$`Comments`[1])
+    code_2 <- paste0(R2_metadata$`Subject ID`[1], '_', R2_metadata$`Comments`[1])
+  } else if (code == "manual" && !is.null(manual)) {
+    code_1 <- manual[1]
+    code_2 <- manual[2]
   } else {
-    stop("The value for the code parameter is not valid. Please choose 'id', 'id+comment', or 'manual'. Default is 'id'.")
+    stop("Invalid code parameter. Choose 'id', 'id+comment', or 'manual'.")
   }
-  
   return(list(code_1, code_2))
 }
 
-extract_meta_data <- function(lines, code, manual = NULL, save_csv = TRUE, path_to_save) {
-  # Extract relevant lines for Room 1 and Room 2 metadata
-  header_lines <- strsplit(trimws(lines[4:7]), '\t')
-
-  # Create named lists (like dictionaries) for Room 1 and Room 2 metadata
-  data_R1 <- setNames(header_lines[[2]], header_lines[[1]][-1])
-  data_R2 <- setNames(header_lines[[4]], header_lines[[3]][-1])
-
-  # Convert lists to data frames
-  R1_metadata <- as.data.frame(t(data_R1), stringsAsFactors = FALSE)
-  R2_metadata <- as.data.frame(t(data_R2), stringsAsFactors = FALSE)
-
-  # Call check_code (you'll need to define check_code function in R)
-  code_values <- check_code(code, manual, R1_metadata, R2_metadata)
-  code_1 <- code_values[[1]]
-  code_2 <- code_values[[2]]
-
-  # Optionally save the data frames as CSV files
+extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
+#' Extracts metadata for two subjects from text lines and optionally saves it as CSV files.
+#' 
+#' @param lines List of strings containing the WRIC metadata.
+#' @param code Method for generating subject IDs ("id", "id+comment", or "manual").
+#' @param manual Custom codes for Room 1 and Room 2 subjects if `code` is "manual".
+#' @param save_csv Logical, whether to save extracted metadata to CSV files.
+#' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
+#' @return A list containing the Room 1 code, Room 2 code, and DataFrames for R1_metadata and R2_metadata.
+  header_lines <- lapply(lines[4:7], function(line) unlist(strsplit(trimws(line), "\t")))
+  data_R1 <- setNames(as.list(header_lines[[2]]), header_lines[[1]][-1])
+  data_R2 <- setNames(as.list(header_lines[[4]]), header_lines[[3]][-1])
+  
+  R1_metadata <- as.data.frame(data_R1, stringsAsFactors = FALSE)
+  R2_metadata <- as.data.frame(data_R2, stringsAsFactors = FALSE)
+  
+  codes <- check_code(code, manual, R1_metadata, R2_metadata)
+  
   if (save_csv) {
-    if (!is.null(path_to_save)) {
-      room1_filename <- paste0(path_to_save, "/", code_1, "_WRIC_metadata.csv")
-      room2_filename <- paste0(path_to_save, "/", code_2, "_WRIC_metadata.csv")
-    } else {
-      room1_filename <- paste0(code_1, "_WRIC_metadata.csv")
-      room2_filename <- paste0(code_2, "_WRIC_metadata.csv")
-    }
-
+    room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[1]], "_WRIC_metadata.csv"), paste0(codes[[1]], "_WRIC_metadata.csv"))
+    room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[2]], "_WRIC_metadata.csv"), paste0(codes[[2]], "_WRIC_metadata.csv"))
     write.csv(R1_metadata, room1_filename, row.names = FALSE)
     write.csv(R2_metadata, room2_filename, row.names = FALSE)
   }
-
-
-  # Return the values
-  return(list(code_1 = code_1, code_2 = code_2, R1_metadata = R1_metadata, R2_metadata = R2_metadata))
+  
+  return(list(codes[[1]], codes[[2]], R1_metadata, R2_metadata))
 }
 
 open_file <- function(filepath) {
-  # Check that the provided filepath is a .txt file
+#' Opens a WRIC .txt file and reads its contents.
+#' 
+#' @param filepath Path to the WRIC .txt file.
+#' @return A list of strings representing the lines of the file.
+#' @note Raises an error if the file is not a valid WRIC data file.
   if (!grepl("\\.txt$", tolower(filepath))) {
     stop("The file must be a .txt file.")
   }
-  
-  # Try to open the file and check the contents
-  tryCatch({
-    lines <- readLines(filepath, warn = FALSE)
-    
-    if (length(lines) == 0 || !startsWith(lines[1], "OmniCal software")) {
-      stop("The provided file is not the WRIC data file.")
-    }
-    
-    return(lines)
-  }, error = function(e) {
-    stop("The filepath you provided does not lead to a valid file.")
-  })
+  lines <- readLines(filepath)
+  if (length(lines) == 0 || !grepl("^OmniCal software", lines[1])) {
+    stop("The provided file is not a valid WRIC data file.")
+  }
+  return(lines)
 }
 
 create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save) {
-  # Find start of data line
-  data_start_index <- NA
-  for (i in seq_along(lines)) {
-    if (startsWith(lines[i], "Room 1 Set 1")) {
-      data_start_index <- i
-      break
-    }
-  }
-  if (is.na(data_start_index)) {
-    stop("Data start line 'Room 1 Set 1' not found.")
-  }
-  
-  # Reading the data starting from where the table begins
-  df <- read.csv(filepath, sep = "\t", skip = data_start_index)
-  
-  # Remove columns with only NA values
-  df <- df[, colSums(!is.na(df)) > 0]
+#' Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
+#' 
+#' @param filepath Path to the WRIC .txt file.
+#' @param lines List of strings read from the file to locate the data start.
+#' @param save_csv Logical, whether to save DataFrames as CSV files.
+#' @param code_1, code_2 Strings representing the codes for Room 1 and Room 2.
+#' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
+#' @return A list containing DataFrames for Room 1 and Room 2 measurements.
+#' @note Raises an error if Date or Time columns are inconsistent across rows.
+#' 
 
-  # Define the new column names
-  columns <- c(
-    "Date", "Time", "VO2", "VCO2", "RER", "FiO2", "FeO2", "FiCO2", "FeCO2", 
-    "Flow", "Activity Monitor", "Energy Expenditure (kJ/min)", "Energy Expenditure (kcal/min)", 
-    "Pressure Ambient", "Temperature", "Relative Humidity"
-  )
+  data_start_index <- which(grepl("^Room 1 Set 1", lines)) + 1
+  df <- read_tsv(filepath, skip = data_start_index, col_names = FALSE)
+
+    # Drop columns with all NA values
+  df <- df %>% select(where(~ !all(is.na(.))))
+  
+  # Define new column names
+  columns <- c("Date", "Time", "VO2", "VCO2", "RER", "FiO2", "FeO2", "FiCO2", "FeCO2", "Flow", 
+               "Activity Monitor", "Energy Expenditure (kcal/min)", "Energy Expenditure (kJ/min)", 
+               "Pressure Ambient", "Temperature", "Relative Humidity")
   new_columns <- c()
   for (set_num in c('S1', 'S2')) {
     for (room in c('R1', 'R2')) {
-      new_columns <- c(new_columns, paste(room, set_num, columns, sep = "_"))
+      new_columns <- c(new_columns, paste0(room, "_", set_num, "_", columns))
     }
   }
   colnames(df) <- new_columns
-  
-  # Check that time and date columns are consistent across rows
-  date_columns <- df[, grep("Date", colnames(df))]
-  time_columns <- df[, grep("Time", colnames(df))]
-  
-  if (any(apply(date_columns, 1, function(x) length(unique(x))) != 1) ||
-      any(apply(time_columns, 1, function(x) length(unique(x))) != 1)) {
+
+  # Check for consistent Date and Time columns
+  date_columns <- df %>% select(contains('Date'))
+  time_columns <- df %>% select(contains('Time'))
+  print(time_columns)
+  if (!all(apply(date_columns, 1, function(x) length(unique(x)) == 1)) || 
+      !all(apply(time_columns, 1, function(x) length(unique(x)) == 1))) {
     stop("Date or Time columns do not match in some rows")
   }
   
-  # Combine Date and Time to DateTime and drop all unnecessary date/time columns
-  df_filtered <- data.frame(
-    Date = date_columns[, 1],
-    Time = time_columns[, 1]
-  )
-  
-  df_filtered$datetime <- as.POSIXct(paste(df_filtered$Date, df_filtered$Time), format = "%m/%d/%y %H:%M:%S")
-  df_filtered <- df_filtered[, "datetime", drop = FALSE]
-  
-  # Drop the old Date and Time columns
-  df <- cbind(df_filtered, df[, !(colnames(df) %in% c(colnames(date_columns), colnames(time_columns)))])
-  
-  # Save separately for Room 1 and Room 2
-  df_room1 <- df[, grepl("^R1", names(df))]
-  df_room2 <- df[, grepl("^R2", names(df))]
+  # Combine Date and Time to DateTime
+  df <- df %>%
+    mutate(
+        R1_S1_Date = as.character(R1_S1_Date),
+        R1_S1_Time = as.character(R1_S1_Time)
+    )
+  datetime <- as.POSIXct(paste(df$R1_S1_Date, df$R1_S1_Time), format = "%m/%d/%y %H:%M:%S")
+  df$datetime <- datetime
+  df <- df %>% relocate(datetime)
+
+  # delete unused date and time columns
+  df <- df %>% select(-contains("Time"))
+  df <- df %>% select(-contains("Date"))
+
+  df_room1 <- df %>% select(contains('R1'))
+  df_room2 <- df %>% select(contains('R2'))
   
   if (save_csv) {
-    room1_filename <- if (!is.null(path_to_save)) {
-      paste0(path_to_save, "/", code_1, "_WRIC_data.csv")
-    } else {
-      paste0(code_1, "_WRIC_data.csv")
-    }
-  
-    room2_filename <- if (!is.null(path_to_save)) {
-      paste0(path_to_save, "/", code_2, "_WRIC_data.csv")
-    } else {
-      paste0(code_2, "_WRIC_data.csv")
-    }
-    
+    room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data.csv"), paste0(code_1, "_WRIC_data.csv"))
+    room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data.csv"), paste0(code_2, "_WRIC_data.csv"))
     write.csv(df_room1, room1_filename, row.names = FALSE)
     write.csv(df_room2, room2_filename, row.names = FALSE)
   }
   
-  return(df)
+  return(list(df_room1 = df_room1, df_room2 = df_room2))
 }
 
-preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL) { # nolint
-  # Open the file and read lines
-  lines <- open_file(filepath)
+check_discrepancies <- function(df, threshold = 0.05, individual = FALSE) {
+#' Checks for discrepancies between S1 and S2 measurements in the DataFrame and prints them to the console.
+#' 
+#' @param df DataFrame containing WRIC data with columns for S1 and S2 measurements.
+#' @param threshold Numeric threshold percentage for mean relative delta discrepancies (default 0.05).
+#' @param individual Logical, if TRUE checks and reports individual row discrepancies beyond the threshold (default FALSE).
+#' @return None. Prints discrepancies to the console.
+  env_params <- c('Pressure Ambient', 'Temperature', 'Relative Humidity', 'Activity Monitor')
+  df_filtered <- df %>% select(-contains(env_params))
   
-  # Extract metadata
+  s1_columns <- df_filtered %>% select(contains('_S1_')) %>% names()
+  s2_columns <- df_filtered %>% select(contains('_S2_')) %>% names()
+  
+  discrepancies <- c()
+  
+  for (i in seq_along(s1_columns)) {
+    s1_values <- df[[s1_columns[i]]]
+    s2_values <- df[[s2_columns[i]]]
+    avg_values <- (s1_values + s2_values) / 2
+    
+    relative_deltas <- (s1_values - s2_values) / avg_values
+    mean_relative_delta <- mean(relative_deltas, na.rm = TRUE)
+    
+    discrepancies <- c(discrepancies, sprintf("%s and %s have a mean relative delta of %.4f.", s1_columns[i], s2_columns[i], mean_relative_delta))
+    
+    if (abs(mean_relative_delta) > (threshold / 100)) {
+      discrepancies <- c(discrepancies, sprintf("%s and %s exceed the %.2f%% threshold.", s1_columns[i], s2_columns[i], threshold))
+    } else {
+      discrepancies <- c(discrepancies, sprintf("%s and %s are within the %.2f%% threshold.", s1_columns[i], s2_columns[i], threshold))
+    }
+    
+    if (individual) {
+      for (j in seq_along(relative_deltas)) {
+        if (abs(relative_deltas[j]) > (threshold / 100)) {
+          discrepancies <- c(discrepancies, sprintf("Row %d: %s and %s differ by a relative delta of %.4f.", j, s1_columns[i], s2_columns[i], relative_deltas[j]))
+        }
+      }
+    }
+  }
+  
+  cat(discrepancies, sep = "\n")
+}
+
+combine_measurements <- function(df, method = 'mean') {
+#' Combines S1 and S2 measurements in the DataFrame using the specified method.
+#' 
+#' @param df DataFrame containing WRIC data with S1 and S2 measurement columns.
+#' @param method String specifying the method to combine measurements ("mean", "median", "s1", "s2", "min", "max").
+#' @return A DataFrame with combined measurements.
+  print("Hi at start of combbine_measurement")
+  s1_columns <- df %>% select(contains('_S1_')) %>% names()
+  s2_columns <- df %>% select(contains('_S2_')) %>% names()
+  
+  print("Hi after s1 and s2 columns")
+  combined <- data.frame(matrix(NA, nrow = nrow(df), ncol = 0))
+  
+  print("hi after combined data frame empty")
+  for (i in seq_along(s1_columns)) {
+    print("hi from for loop")
+    if (method == 'mean') {
+      print("method mean")
+      combined_values <- (df[[s1_columns[i]]] + df[[s2_columns[i]]]) / 2
+      print("combined values")
+    } else if (method == 'median') {
+      combined_values <- apply(cbind(df[[s1_columns[i]]], df[[s2_columns[i]]]), 1, median)
+    } else if (method == 's1') {
+      combined_values <- df[[s1_columns[i]]]
+    } else if (method == 's2') {
+      combined_values <- df[[s2_columns[i]]]
+    } else if (method == 'min') {
+      combined_values <- pmin(df[[s1_columns[i]]], df[[s2_columns[i]]], na.rm = TRUE)
+    } else if (method == 'max') {
+      combined_values <- pmax(df[[s1_columns[i]]], df[[s2_columns[i]]], na.rm = TRUE)
+    } else {
+      stop("Method not supported. Use 'mean', 'median', 's1', 's2', 'min', or 'max'.")
+    }
+    print("after combination")
+    column_name <- sub("^.*?_S[12]_", "", s1_columns[i])
+    print("column names")
+    print(column_name)
+    print(head(combined_values))
+    combined[[column_name]] <- combined_values
+    print("end")
+  }
+  
+  return(combined)
+}
+
+preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean") {
+#' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
+#' 
+#' @param filepath Path to the WRIC .txt file.
+#' @param code Method for generating subject IDs ("id", "id+comment", or "manual").
+#' @param manual Custom codes for subjects in Room 1 and Room 2 if `code` is "manual".
+#' @param save_csv Logical, whether to save extracted metadata and data to CSV files.
+#' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
+#' @param combine Logical, whether to combine S1 and S2 measurements.
+#' @param method Method for combining measurements ("mean", "median", "s1", "s2", "min", "max").
+#' @return A list containing the metadata and DataFrames for Room 1 and Room 2.
+  lines <- open_file(filepath)
   result <- extract_meta_data(lines, code, manual, save_csv, path_to_save)
   R1_metadata <- result$R1_metadata
   R2_metadata <- result$R2_metadata
   code_1 <- result$code_1
   code_2 <- result$code_2
+  result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save)
+  df_room1 <- result$df_room1
+  df_room2 <- result$df_room2
   
-  # Create WRIC DataFrame
-  wric_data <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save)
+  if (combine) {
+    df_room1 <- combine_measurements(df_room1, method)
+    df_room2 <- combine_measurements(df_room2, method)
+  }
   
-  return(list(R1_metadata = R1_metadata, R2_metadata = R2_metadata, wric_data = wric_data)) # nolint
+  if (save_csv) {
+    room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data_combined.csv"), paste0(code_1, "_WRIC_data_combined.csv"))
+    room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data_combined.csv"), paste0(code_2, "_WRIC_data_combined.csv"))
+    write.csv(df_room1, room1_filename, row.names = FALSE)
+    write.csv(df_room2, room2_filename, row.names = FALSE)
+  }
+  
+  str(df_room1)
+  return(list(R1_metadata = R1_metadata , R2_metadata = R2_metadata, df_room1 = df_room1, df_room2 = df_room2))
 }
 
-# Load necessary libraries
-#library(readr)  # For reading CSV files
-library(dplyr)  # For data manipulation (if needed)
+export_file_from_redcap <- function(record_id, fieldname, path = './tmp/export.raw.txt') {
+#' Exports a file from REDCap based on the specified record ID and field name.
+#' 
+#' @param record_id String containing the unique identifier for the record in REDCap.
+#' @param fieldname Field name from which to export the file.
+#' @param path File path where the exported file will be saved.
+#' @return None. The file is saved to the specified path.
+  fields <- list(
+    'token' = config$api_token,
+    'content' = 'file',
+    'action' = 'export',
+    'record' = record_id,
+    'field' = fieldname
+  )
+  
+  r <- httr::POST(config$api_url, body = fields)
+  cat('HTTP Status:', httr::status_code(r), '\n')
+  
+  writeBin(httr::content(r, "raw"), path)
+}
 
-# Define the file path
-filepath <- "C:/Documents/WRIC_example_data/Results_1m_copy_anonymised.txt"
-
-# Call the preprocess_WRIC_file function
-result <- preprocess_WRIC_file(filepath, code = "id+comment")
-
-# Extract the results from the returned list
-R1_metadata <- result$R1_metadata
-R2_metadata <- result$R2_metadata
-wric_data <- result$wric_data
-
-# Display the strcuture of the WRIC data
-print(str(wric_data))
+upload_file_to_redcap <- function(filepath, record_id, fieldname) {
+#' Uploads a file to REDCap for a specified record ID and field name.
+#' 
+#' @param filepath Path to the file to be uploaded.
+#' @param record_id String containing the unique identifier for the record in REDCap.
+#' @param fieldname Field name to which the file will be uploaded.
+#' @return None. Prints the HTTP status code of the request.
+  fields <- list(
+    'token' = config$api_token,
+    'content' = 'file',
+    'action' = 'import',
+    'record' = record_id,
+    'field' = fieldname,
+    'returnFormat' = 'json'
+  )
+  
+  file_obj <- httr::upload_file(filepath)
+  r <- httr::POST(config$api_url, body = fields, encode = "multipart", httr::add_headers("file" = file_obj))
+  
+  cat('HTTP Status:', httr::status_code(r), '\n')
+}
