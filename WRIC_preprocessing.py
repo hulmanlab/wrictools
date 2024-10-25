@@ -211,6 +211,11 @@ def check_discrepancies(df, threshold=0.05, individual=False):
         Threshold percentage for mean relative delta discrepancies. Default is 0.05 (5%).
     individual : bool, optional
         If True, checks and reports individual row discrepancies beyond the threshold. Default is False.
+        
+    Notes:
+    ------
+    - This function is not included in the big pre-processing function, as it is more intended to 
+    perform a quality check on your data and not to automatically inform the processing of the data. 
     """
     env_params = ['Pressure Ambient', 'Temperature', 'Relative Humidity', 'Activity Monitor']
     df_filtered = df.loc[:, ~df.columns.str.contains('|'.join(env_params))]
@@ -431,37 +436,62 @@ def upload_file_to_redcap(filepath, record_id, fieldname):
     file_obj.close()
 
     print('HTTP Status: ' + str(r.status_code))
-
-def upload_file_to_redcap(filepath, record_id, fieldname):
+    
+def preprocess_WRIC_files(csv_file, fieldname, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean"):
     """
-    Uploads a file to REDCap for a specified record ID and field name.
+    Iterates through records based on record IDs in a CSV file, exporting and processing WRIC data from REDCap.
 
     Parameters:
     ----------
-    filepath : str
-        The path to the file to be uploaded.
-    record_id : str
-        The unique identifier for the record in REDCap.
+    csv_file : str
+        Path to the CSV file containing record IDs.
     fieldname : str
-        The field name to which the file will be uploaded.
+        The field name from which to export the WRIC data.
+    code : str, optional
+        Method for generating subject IDs ("id", "id+comment", or "manual"). Default is "id".
+    manual : list or None, optional
+        Custom codes for subjects in Room 1 and Room 2 if `code` is "manual". Default is None.
+    save_csv : bool, optional
+        Whether to save extracted metadata and data to CSV files. Default is True.
+    path_to_save : str or None, optional
+        Directory path for saving CSV files. Uses current directory if None. Default is None.
+    combine : bool, optional
+        Whether to combine S1 and S2 measurements into a single DataFrame. Default is True.
+    method: str, optional
+        Method for combining measurements. Options are:
+        - 'mean': Average of S1 and S2 (default).
+        - 'median': Median of S1 and S2.
+        - 's1': Take S1 measurements.
+        - 's2': Take S2 measurements.
+        - 'min': Minimum of S1 and S2.
+        - 'max': Maximum of S1 and S2.
+
+    Returns:
+    -------
+    dict
+        A dictionary where each key is a record ID and each value is a tuple containing:
+        (R1_metadata, R2_metadata, df_room1, df_room2) for each record.
 
     Notes:
     ------
-    - The function prints the HTTP status code of the upload request.
+    - Requires a valid API access token configured in `config['api_token']` to interact with REDCap (see ReadMe)
+    - Ensure the CSV file contains valid record IDs in the first column.
     """
 
-    fields = {
-        'token': config['api_token'],
-        'content': 'file',
-        'action': 'import',
-        'record': record_id,
-        'field': fieldname,
-        'returnFormat': 'json'
-    }
+    record_ids = []
+    with open(csv_file, mode='r', newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            # Assuming the record IDs are in the first column
+            record_ids.append(str(row[0])) 
 
-    file_obj = open(filepath, 'rb')
-    r = requests.post(config['api_url'],data=fields,files={'file':file_obj})
-    file_obj.close()
+    dataframes = dict()
 
-    print('HTTP Status: ' + str(r.status_code))
+    for record_id in record_ids:
+
+        export_file_from_redcap(record_id, fieldname, path = None)
+        R1_metadata, R2_metadata, df_room1, df_room2 = preprocess_WRIC_file('./tmp/export.raw.txt', code, manual, save_csv, path_to_save, combine, method)
+        dataframes[record_id] = (R1_metadata, R2_metadata, df_room1, df_room2)
+    
+    return dataframes
 

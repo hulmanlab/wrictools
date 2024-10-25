@@ -6,17 +6,26 @@ If you instead want to use the functions in Python, please click below.
 
 [![pt-br](https://img.shields.io/badge/Python-yellow.svg)](https://github.com/NinaZiegenbein/WRIC_processing/blob/main/README.python.md)
 
-First we need to import the python files to be able to use the functions (see Quickstart).
+First we need to import the R file as a source to be able to use the functions (see Quickstart).
 
 ## Quickstart
 ```R
 source('wric_processor.R')
 ```
 
-Each function in the file has a detailed docstring explaining what the function does and which parameter it needs. The functions are modular, so you can flexibly use them how you need them.
+Each function in the file has a detailed docstring explaining what the function does and which parameter it needs. The functions are modular, so you can flexibly use them how you need them. 
+
+You can read the docstring in the file or get it shown using the [docstring package](https://cran.r-project.org/web/packages/docstring/vignettes/docstring_intro.html). Install using `install.package("docstring")` and call any function `docstring(function_name)` or shortly `?function_name` to see the docstring.
+
+## Dependencies
+The code needs the following packages. You can easily install them with `install.packages("package_name")` in the terminal.
+- [dplyr](https://dplyr.tidyverse.org/)
+- [readr](https://readr.tidyverse.org/)
+- [RCurl](https://cran.r-project.org/web/packages/RCurl/index.html)
+- [stringr](https://stringr.tidyverse.org/)
 
 ## Preprocess Local WRIC file(s)
-If you have a WRIC (txt) file locally and want to preprocess it: That means reading the metadata at the top of the file, extracting the data from the txt format into a csv format, performing a descrepancy check between s1 and s2 measurements, combining the two measurements, splitting by room1 and room2 and saving the data as a csv. Some of these actions are optional, so you can choose based on the parameters you provide.
+If you have a WRIC (txt) file locally and want to preprocess it: That means reading the metadata at the top of the file, extracting the data from the txt format into a csv format, combining the two measurements, splitting by room1 and room2 and saving the data as a csv. Some of these actions are optional, so you can choose based on the parameters you provide.
 
 _Note: The data.txt in the example_data folder is random data in the same form and is just to highlight the data pipeline, but should not be used for actual analysis!_
 
