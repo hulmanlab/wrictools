@@ -169,3 +169,4 @@ cython_debug/
 *.csv
 config.py
 config.r
+cacert.pem
