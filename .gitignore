@@ -170,3 +170,5 @@ cython_debug/
 config.py
 config.r
 cacert.pem
+
+tmp/
