@@ -25,7 +25,7 @@ The code needs the following packages. You can easily install them with `install
 - [stringr](https://stringr.tidyverse.org/)
 
 ## Preprocess Local WRIC file(s)
-If you have a WRIC (txt) file locally and want to preprocess it: That means reading the metadata at the top of the file, extracting the data from the txt format into a csv format, combining the two measurements, splitting by room1 and room2 and saving the data as a csv. Some of these actions are optional, so you can choose based on the parameters you provide.
+If you have a WRIC (txt) file locally and want to preprocess it: That means reading the metadata at the top of the file, extracting the data from the txt format into a csv format, only including certain rows between start and end of the study, adding a relative time measurement, combining the two measurements, splitting by room1 and room2 and saving the data as a csv. Some of these actions are optional, so you can choose based on the parameters you provide.
 
 _Note: The data.txt in the example_data folder is random data in the same form and is just to highlight the data pipeline, but should not be used for actual analysis!_
 
@@ -47,7 +47,9 @@ result <- preprocess_WRIC_file(
     save_csv=TRUE, 
     path_to_save=NULL, 
     combine=TRUE, 
-    method="mean"
+    method="mean",
+    start=NULL,
+    end=NULL
 )
 ```
 ## Preprocess multiple files on RedCap
@@ -60,7 +62,7 @@ Besides setting up the config file, you need to specify the field-name of your R
 _Please note that the code below will not work for you until you 1) set up the config file, 2) create a csv with record ids and change the file path, 3) write the correct field name of your project._
 
 ```R
-result <- preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean")
+result <- preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", code = "id", manual = NULL, save_csv = True, path_to_save = NULL, combine = True, method = "mean", start = NULL, end = NULL)
 R1_metadata <- result$R1_metadata
 R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1

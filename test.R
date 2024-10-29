@@ -2,7 +2,7 @@ source('config.R')
 source('wric_preprocessing.R')
 library(RCurl)
 
-result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment")
+result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", start="2023-11-13 11:43:00", end="2023-11-13 12:09:00")
 R1_metadata <- result$R1_metadata
 R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1

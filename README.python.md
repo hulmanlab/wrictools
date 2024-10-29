@@ -28,7 +28,7 @@ display(df_room1)
 The above code specifies only the necessary parameter "filepath" and assumes the default values for all other parameters. But you can specify these parameters for yourself, as can be seen below. As these are the default options the two function calls return exactly the same results.
 
 ```python
-R1_metadata, R2_metadata, df_room1, df_room2 = wric.preprocess_WRIC_file("./example_data/data.txt", code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean") 
+R1_metadata, R2_metadata, df_room1, df_room2 = wric.preprocess_WRIC_file("./example_data/data.txt", code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean", start = None, end = None) 
 display(df_room1)
 ```
 
@@ -42,7 +42,7 @@ Besides setting up the config file, you need to specify the field-name of your R
 _Please note that the code below will not work for you until you 1) set up the config file, 2) create a csv with record ids and change the file path, 3) write the correct field name of your project._
 
 ```python
-R1_metadata, R2_metadata, df_room1, df_room2 =  wric.preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean")
+R1_metadata, R2_metadata, df_room1, df_room2 =  wric.preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean", start = None, end = None)
 ```
 
 ## Get your API Token for RedCap

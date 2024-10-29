@@ -12,13 +12,9 @@ check_code <- function(code, manual, R1_metadata, R2_metadata) {
 #' @param R1_metadata, R2_metadata DataFrames for metadata of Room 1 and Room 2, containing "Subject ID" and "Comments".
 #' @return A list containing the codes for Room 1 and Room 2.
   if (code == "id") {
-    print("id")
-    print(R1_metadata)
     code_1 <- R1_metadata$`Subject.ID`[1]
-    print(code_1)
     code_2 <- R2_metadata$`Subject.ID`[1]
   } else if (code == "id+comment") {
-    print("id+comment")
     code_1 <- paste0(R1_metadata$`Subject.ID`[1], '_', R1_metadata$`Comments`[1])
     code_2 <- paste0(R2_metadata$`Subject.ID`[1], '_', R2_metadata$`Comments`[1])
   } else if (code == "manual" && !is.null(manual)) {
@@ -47,14 +43,10 @@ extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
   R2_metadata <- as.data.frame(data_R2, stringsAsFactors = FALSE)
   
   codes <- check_code(code, manual, R1_metadata, R2_metadata)
-  print("extract eta data")
-  print(codes)
-  print(codes[1])
   
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[1]], "_WRIC_metadata.csv"), paste0(codes[[1]], "_WRIC_metadata.csv"))
     room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[2]], "_WRIC_metadata.csv"), paste0(codes[[2]], "_WRIC_metadata.csv"))
-    print(room1_filename)
     write.csv(R1_metadata, room1_filename, row.names = FALSE)
     write.csv(R2_metadata, room2_filename, row.names = FALSE)
   }
@@ -79,7 +71,7 @@ open_file <- function(filepath) {
 }
 
 add_relative_time <- function(df, start_time=NULL) {
-#' Add Relative Time in minutes to DataFrame.
+#' Add Relative Time in minutes to DataFrame. Rows before the start_time will be indicated negative.
 #'
 #' @param df A data frame containing a 'datetime' column.
 #' @param start_time Optional; the starting time for calculating relative time. 
@@ -94,7 +86,37 @@ add_relative_time <- function(df, start_time=NULL) {
   return(df)
 }
 
-create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save) {
+cut_rows <- function(df, start = NULL, end = NULL) {
+  #' Filters rows in a DataFrame based on an optional start and end datetime range.
+  #'
+  #' @param df data.frame
+  #'   DataFrame with a "datetime" column to filter.
+  #' @param start character or POSIXct or NULL, optional; 
+  #'    Start datetime; rows before this will be removed. If NULL, uses the earliest datetime in the DataFrame.
+  #' @param end character or POSIXct or NULL, optional
+  #'   End datetime; rows after this will be removed. If NULL, uses the latest datetime in the DataFrame.
+  #'
+  #' @return data.frame
+  #'   DataFrame with rows between the specified start and end dates, or the full DataFrame if both are NULL.
+  
+  df$datetime <- as.POSIXct(df$datetime)
+  
+  if (is.null(start) && is.null(end)) {
+    return(df) 
+  } else if (is.null(start)) {
+    start <- min(df$datetime, na.rm = TRUE) 
+  } else if (is.null(end)) {
+    end <- max(df$datetime, na.rm = TRUE)
+  }
+  
+  start <- as.POSIXct(start)
+  end <- as.POSIXct(end)
+  
+  return(df[df$datetime >= start & df$datetime <= end, ])
+}
+
+
+create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end) {
 #' Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
 #' 
 #' @param filepath Path to the WRIC .txt file.
@@ -144,6 +166,8 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
   # delete now unnecessary date and time columns
   columns_to_drop <- c(grep("Time", names(df), ignore.case=FALSE, value = TRUE), grep("Date", names(df), ignore.case=FALSE, value = TRUE))
   df <- df %>% select(-all_of(columns_to_drop))
+
+  df <- cut_rows(df, start, end)
 
   df <- add_relative_time(df)
 
@@ -246,7 +270,7 @@ combine_measurements <- function(df, method = 'mean') {
   return(combined)
 }
 
-preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean") {
+preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL) {
 #' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
 #' 
 #' @param filepath Path to the WRIC .txt file.
@@ -256,6 +280,8 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
 #' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
 #' @param combine Logical, whether to combine S1 and S2 measurements.
 #' @param method Method for combining measurements ("mean", "median", "s1", "s2", "min", "max").
+#' @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row
+#' @param end character or POSIXct or NULL, rows after this will be removed, if NULL takes last rows
 #' @return A list containing the metadata and DataFrames for Room 1 and Room 2.
   lines <- open_file(filepath)
   result <- extract_meta_data(lines, code, manual, save_csv, path_to_save)
@@ -263,10 +289,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   R2_metadata <- result$R2_metadata
   code_1 <- result$code_1
   code_2 <- result$code_2
-  print("result")
-  print(result$code_1)
-  print(result$R1_metadata)
-  result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save)
+  result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end)
   df_room1 <- result$df_room1
   df_room2 <- result$df_room2
   
@@ -278,7 +301,6 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data_combined.csv"), paste0(code_1, "_WRIC_data_combined.csv"))
     room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data_combined.csv"), paste0(code_2, "_WRIC_data_combined.csv"))
-    print(room1_filename)
     write.csv(df_room1, room1_filename, row.names = FALSE)
     write.csv(df_room2, room2_filename, row.names = FALSE)
   }
@@ -341,7 +363,7 @@ upload_file_to_redcap <- function(filepath, record_id, fieldname) {
 }
 
 preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NULL, 
-                                  save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean") {
+                                  save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL) {
 #' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
 #' 
 #' @param csv_file Path to the CSV file containing record IDs.
@@ -365,7 +387,7 @@ preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NUL
     export_file_from_redcap(record_id, fieldname)
     
     # Call preprocess_WRIC_file function (this should be defined elsewhere)
-    result <- preprocess_WRIC_file("./tmp/export.raw.txt", code, manual, save_csv, path_to_save, combine, method)
+    result <- preprocess_WRIC_file("./tmp/export.raw.txt", code, manual, save_csv, path_to_save, combine, method, start, end)
     
     # Store the results for the record ID
     dataframes[[as.character(record_id)]] <- list(

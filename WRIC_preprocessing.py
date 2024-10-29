@@ -137,7 +137,7 @@ def add_relative_time(df, start_time=None):
         A DataFrame containing a 'datetime' column.
     start_time : str or pd.Timestamp, optional 
         The starting time for calculating relative time. Defaults to None, 
-        in which case the first datetime in the DataFrame is used.
+        in which case the first datetime in the DataFrame is used. Previous rows will be indicated negative from the start_time.
 
     Returns:
     -------
@@ -151,8 +151,39 @@ def add_relative_time(df, start_time=None):
     
     return df
     
+def cut_rows(df, start=None, end=None):
+    """
+    Filters rows in a DataFrame based on a start and end datetime range.
 
-def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save):
+    Parameters:
+    ----------
+    df : pd.DataFrame
+        DataFrame with a "datetime" column to filter.
+    start : str or datetime-like or None, optional
+        Start datetime; rows before this will be removed.
+    end : str or datetime-like or None, optional
+        End datetime; rows after this will be removed.
+
+    Returns:
+    -------
+    pd.DataFrame
+        DataFrame with rows between the specified start and end dates.
+    """
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    
+    if start is None and end is None:
+        return df 
+    elif start is None:
+        start = df['datetime'].min()
+    elif end is None:
+        end = df['datetime'].max()
+        
+    start = pd.to_datetime(start)
+    end = pd.to_datetime(end)
+    
+    return df[(df['datetime'] >= start) & (df['datetime'] <= end)]
+
+def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end):
     """
     Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
 
@@ -201,8 +232,6 @@ def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save):
             for col in columns:
                 new_columns.append(f"{room}_{set_num}_{col}")
     df.columns = new_columns
-    
-    # TODO: Cut to desired rows (do before setting the relative time)
 
     # Check that time and date columns are consistent across rows
     date_columns, time_columns = df.filter(like='Date'), df.filter(like='Time')
@@ -214,6 +243,9 @@ def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save):
     df_filtered['datetime'] = pd.to_datetime(df_filtered['Date'] + ' ' + df_filtered['Time'], format='%m/%d/%y %H:%M:%S')
     df_filtered = df_filtered.drop(columns=['Date', 'Time'])
     df = df_filtered.join(df.drop(columns=df.filter(like='Date').columns).drop(columns=df.filter(like='Time').columns))
+    
+    # Cut to only include desired rows (do before setting the relative time)
+    df = cut_rows(df, start, end)
     
     df = add_relative_time(df)
     display(df)
@@ -353,7 +385,7 @@ def combine_measurements(df, method='mean'):
         
     return combined
 
-def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean"):
+def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean", start=None, end=None):
     """
     Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
 
@@ -379,6 +411,10 @@ def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, 
         - 's2': Take S2 measurements.
         - 'min': Minimum of S1 and S2.
         - 'max': Maximum of S1 and S2.
+    start: str or datetime or None, optional
+        Start datetime; rows before this will be removed. If None, uses the earliest datetime in the DataFrame.
+    end: str or datetime or None, optional
+        End datetime; rows after this will be removed. If None, uses the latest datetime in the DataFrame.
 
     Returns:
     -------
@@ -389,7 +425,7 @@ def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, 
     """     
     lines = open_file(filepath)
     code_1, code_2, R1_metadata, R2_metadata = extract_meta_data(lines, code, manual, save_csv, path_to_save)
-    df_room1, df_room2 = create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save)
+    df_room1, df_room2 = create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end)
     if combine:
         df_room1 = combine_measurements(df_room1, method)
         df_room2 = combine_measurements(df_room2, method)
@@ -474,7 +510,7 @@ def upload_file_to_redcap(filepath, record_id, fieldname):
 
     print('HTTP Status: ' + str(r.status_code))
     
-def preprocess_WRIC_files(csv_file, fieldname, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean"):
+def preprocess_WRIC_files(csv_file, fieldname, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean", start = None, end= None):
     """
     Iterates through records based on record IDs in a CSV file, exporting and processing WRIC data from REDCap.
 
@@ -527,7 +563,7 @@ def preprocess_WRIC_files(csv_file, fieldname, code = "id", manual = None, save_
     for record_id in record_ids:
 
         export_file_from_redcap(record_id, fieldname, path = None)
-        R1_metadata, R2_metadata, df_room1, df_room2 = preprocess_WRIC_file('./tmp/export.raw.txt', code, manual, save_csv, path_to_save, combine, method)
+        R1_metadata, R2_metadata, df_room1, df_room2 = preprocess_WRIC_file('./tmp/export.raw.txt', code, manual, save_csv, path_to_save, combine, method, start, end)
         dataframes[record_id] = (R1_metadata, R2_metadata, df_room1, df_room2)
     
     return dataframes
