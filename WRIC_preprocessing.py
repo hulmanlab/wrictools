@@ -4,6 +4,7 @@ import numpy as np
 from config import config
 import requests
 import csv
+from IPython.display import display
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 5)
 
@@ -126,6 +127,31 @@ def open_file(filepath):
         
     return lines
 
+def add_relative_time(df, start_time=None):
+    """
+    Add Relative Time in minutes to DataFrame.
+
+    Parameters:
+    ----------
+    df : pd.DataFrame 
+        A DataFrame containing a 'datetime' column.
+    start_time : str or pd.Timestamp, optional 
+        The starting time for calculating relative time. Defaults to None, 
+        in which case the first datetime in the DataFrame is used.
+
+    Returns:
+    -------
+    pd.DataFrame: The original DataFrame with an additional column 'relative_time[min]' 
+        indicating the time in minutes from the start time.
+    """
+    if start_time is None:
+        start_time = df['datetime'].iloc[0]
+    start_time = pd.to_datetime(start_time)
+    df['relative_time[min]'] = (df['datetime'] - start_time).dt.total_seconds() /60
+    
+    return df
+    
+
 def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save):
     """
     Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
@@ -175,6 +201,8 @@ def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save):
             for col in columns:
                 new_columns.append(f"{room}_{set_num}_{col}")
     df.columns = new_columns
+    
+    # TODO: Cut to desired rows (do before setting the relative time)
 
     # Check that time and date columns are consistent across rows
     date_columns, time_columns = df.filter(like='Date'), df.filter(like='Time')
@@ -187,9 +215,16 @@ def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save):
     df_filtered = df_filtered.drop(columns=['Date', 'Time'])
     df = df_filtered.join(df.drop(columns=df.filter(like='Date').columns).drop(columns=df.filter(like='Time').columns))
     
-    # Split dataset by room
+    df = add_relative_time(df)
+    display(df)
+    
+    # Split dataset by room and add datetime to both
     df_room1 = df.filter(like='R1')
+    df_room1['datetime'] = df['datetime']
+    df_room1['relative_time[min]'] = df['relative_time[min]']
     df_room2 = df.filter(like='R2')
+    df_room2['datetime'] = df['datetime']
+    df_room2['relative_time[min]'] = df['relative_time[min]']
 
     if save_csv:
         room1_filename = f'{path_to_save}/{code_1}_WRIC_data.csv' if path_to_save else f'{code_1}_WRIC_data.csv'
@@ -291,8 +326,10 @@ def combine_measurements(df, method='mean'):
     """
     s1_columns = df.filter(like='_S1_').columns
     s2_columns = df.filter(like='_S2_').columns
+    # find all columns that do not have two measurements (e.g. datetime)
+    non_s_columns = df.loc[:, ~df.columns.isin(s1_columns.union(s2_columns))]
     
-    combined = pd.DataFrame()
+    combined = pd.DataFrame(non_s_columns)
     
     for s1_col, s2_col in zip(s1_columns, s2_columns):
         if method == 'mean':

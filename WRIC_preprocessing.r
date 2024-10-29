@@ -12,18 +12,22 @@ check_code <- function(code, manual, R1_metadata, R2_metadata) {
 #' @param R1_metadata, R2_metadata DataFrames for metadata of Room 1 and Room 2, containing "Subject ID" and "Comments".
 #' @return A list containing the codes for Room 1 and Room 2.
   if (code == "id") {
-    code_1 <- R1_metadata$`Subject ID`[1]
-    code_2 <- R2_metadata$`Subject ID`[1]
+    print("id")
+    print(R1_metadata)
+    code_1 <- R1_metadata$`Subject.ID`[1]
+    print(code_1)
+    code_2 <- R2_metadata$`Subject.ID`[1]
   } else if (code == "id+comment") {
-    code_1 <- paste0(R1_metadata$`Subject ID`[1], '_', R1_metadata$`Comments`[1])
-    code_2 <- paste0(R2_metadata$`Subject ID`[1], '_', R2_metadata$`Comments`[1])
+    print("id+comment")
+    code_1 <- paste0(R1_metadata$`Subject.ID`[1], '_', R1_metadata$`Comments`[1])
+    code_2 <- paste0(R2_metadata$`Subject.ID`[1], '_', R2_metadata$`Comments`[1])
   } else if (code == "manual" && !is.null(manual)) {
     code_1 <- manual[1]
     code_2 <- manual[2]
   } else {
     stop("Invalid code parameter. Choose 'id', 'id+comment', or 'manual'.")
   }
-  return(list(code_1, code_2))
+  return(c(code_1, code_2))
 }
 
 extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
@@ -43,15 +47,19 @@ extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
   R2_metadata <- as.data.frame(data_R2, stringsAsFactors = FALSE)
   
   codes <- check_code(code, manual, R1_metadata, R2_metadata)
+  print("extract eta data")
+  print(codes)
+  print(codes[1])
   
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[1]], "_WRIC_metadata.csv"), paste0(codes[[1]], "_WRIC_metadata.csv"))
     room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[2]], "_WRIC_metadata.csv"), paste0(codes[[2]], "_WRIC_metadata.csv"))
+    print(room1_filename)
     write.csv(R1_metadata, room1_filename, row.names = FALSE)
     write.csv(R2_metadata, room2_filename, row.names = FALSE)
   }
   
-  return(list(codes[[1]], codes[[2]], R1_metadata, R2_metadata))
+  return(list(code_1 = codes[1], code_2 = codes[2], R1_metadata = R1_metadata, R2_metadata = R2_metadata))
 }
 
 open_file <- function(filepath) {
@@ -68,6 +76,22 @@ open_file <- function(filepath) {
     stop("The provided file is not a valid WRIC data file.")
   }
   return(lines)
+}
+
+add_relative_time <- function(df, start_time=NULL) {
+#' Add Relative Time in minutes to DataFrame.
+#'
+#' @param df A data frame containing a 'datetime' column.
+#' @param start_time Optional; the starting time for calculating relative time. 
+#'                   Should be in a format compatible with POSIXct (eg. "2023-11-13 11:40:00")
+#' @return A data frame with an additional column 'relative_time[min]' indicating
+#'         the time in minutes from the start time.
+  if (is.null(start_time)) {
+    start_time <- df$datetime[1]
+  }
+  start_time <- as.POSIXct(start_time)
+  df$`relative_time[min]` <- as.numeric(difftime(df$datetime, start_time, units = "mins"))
+  return(df)
 }
 
 create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save) {
@@ -116,14 +140,21 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     )
   datetime <- as.POSIXct(paste(df$R1_S1_Date, df$R1_S1_Time), format = "%m/%d/%y %H:%M:%S")
   df$datetime <- datetime
-  df <- df %>% relocate(datetime)
 
-  # delete unused date and time columns
-  df <- df %>% select(-contains("Time"))
-  df <- df %>% select(-contains("Date"))
+  # delete now unnecessary date and time columns
+  columns_to_drop <- c(grep("Time", names(df), ignore.case=FALSE, value = TRUE), grep("Date", names(df), ignore.case=FALSE, value = TRUE))
+  df <- df %>% select(-all_of(columns_to_drop))
 
-  df_room1 <- df %>% select(contains('R1'))
-  df_room2 <- df %>% select(contains('R2'))
+  df <- add_relative_time(df)
+
+  df_room1 <- df %>%
+    select(contains('R1')) %>%
+    mutate(datetime = df$datetime) %>%
+    mutate(`relative_time[min]` = df$`relative_time[min]`) 
+  df_room2 <- df %>%
+    select(contains('R2')) %>%
+    mutate(datetime = df$datetime) %>%
+    mutate(`relative_time[min]` = df$`relative_time[min]`) 
   
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data.csv"), paste0(code_1, "_WRIC_data.csv"))
@@ -187,8 +218,10 @@ combine_measurements <- function(df, method = 'mean') {
 #' @return A DataFrame with combined measurements.
   s1_columns <- df %>% select(contains('_S1_')) %>% names()
   s2_columns <- df %>% select(contains('_S2_')) %>% names()
+  non_s_columns <- names(df)[!names(df) %in% c(s1_columns, s2_columns)]
   
-  combined <- data.frame(matrix(NA, nrow = nrow(df), ncol = 0))
+  combined <- df[, non_s_columns]
+  combined <- as.data.frame(combined)
   
   for (i in seq_along(s1_columns)) {
     if (method == 'mean') {
@@ -230,6 +263,9 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   R2_metadata <- result$R2_metadata
   code_1 <- result$code_1
   code_2 <- result$code_2
+  print("result")
+  print(result$code_1)
+  print(result$R1_metadata)
   result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save)
   df_room1 <- result$df_room1
   df_room2 <- result$df_room2
@@ -242,6 +278,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data_combined.csv"), paste0(code_1, "_WRIC_data_combined.csv"))
     room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data_combined.csv"), paste0(code_2, "_WRIC_data_combined.csv"))
+    print(room1_filename)
     write.csv(df_room1, room1_filename, row.names = FALSE)
     write.csv(df_room2, room2_filename, row.names = FALSE)
   }

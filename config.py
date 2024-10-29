@@ -1,4 +1,4 @@
 config = dict(
-    api_token       = '015F9D1FA2BBBEAEC269B1713464D51F',
+    api_token       = '05E3A05AF359F18C9FCF96ECBBAF08F2',
     api_url         = 'https://redcap.au.dk/api/'
 )

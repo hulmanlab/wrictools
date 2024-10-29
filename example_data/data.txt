@@ -2,9 +2,9 @@ OmniCal software by ing.P.F.M.Schoffelen, Dept. of Human Biology, Maastricht Uni
 file identifier is C:\MI_Room_Calorimeter\Results_online\1_minute\Results_1m_0101_202311131110.txt	
 	
 Room 1	Project	Subject ID	Experiment performed by	Comments
-	CIRCLE	XXXX	JANE DOE	Visit 2
+	PROJECT	XXXX	JANE DOE	Visit 2
 Room 2	Project	Subject ID	Experiment performed by	Comments
-	CIRCLE	YYYY	JOHN DOE	VISIT 1
+	PROJECT	YYYY	JOHN DOE	VISIT 1
 
 Room 1 Set 1																	Room 2 Set 1																	Room 1 Set 2																	Room 2 Set 2
 Date (mm/dd/yy)	Time (HH:MM:SS)	VO2 (mL/min)	VCO2 (mL/min)	RER	FiO2 (vol%)	FeO2 (vol%)	FiCO2 (vol%)	FeCO2 (vol%)	Flow (sL/min)	Activity monitor (counts)	Energy Expenditure (kJ/min)	Energy Expenditure (kcal/min)	Pressure Ambient (mbar)	Temperature (degC)	Relative Humidity (%)		Date (mm/dd/yy)	Time (HH:MM:SS)	VO2 (mL/min)	VCO2 (mL/min)	RER	FiO2 (vol%)	FeO2 (vol%)	FiCO2 (vol%)	FeCO2 (vol%)	Flow (sL/min)	Activity monitor (counts)	Energy Expenditure (kJ/min)	Energy Expenditure (kcal/min)	Pressure Ambient (mbar)	Temperature (degC)	Relative Humidity (%)		Date (mm/dd/yy)	Time (HH:MM:SS)	VO2 (mL/min)	VCO2 (mL/min)	RER	FiO2 (vol%)	FeO2 (vol%)	FiCO2 (vol%)	FeCO2 (vol%)	Flow (sL/min)	Activity monitor (counts)	Energy Expenditure (kJ/min)	Energy Expenditure (kcal/min)	Pressure Ambient (mbar)	Temperature (degC)	Relative Humidity (%)		Date (mm/dd/yy)	Time (HH:MM:SS)	VO2 (mL/min)	VCO2 (mL/min)	RER	FiO2 (vol%)	FeO2 (vol%)	FiCO2 (vol%)	FeCO2 (vol%)	Flow (sL/min)	Activity monitor (counts)	Energy Expenditure (kJ/min)	Energy Expenditure (kcal/min)	Pressure Ambient (mbar)	Temperature (degC)	Relative Humidity (%)
