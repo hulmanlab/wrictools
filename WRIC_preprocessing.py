@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import numpy as np
 from config import config
+from datetime import datetime
 import requests
 import csv
 from IPython.display import display
@@ -183,7 +184,182 @@ def cut_rows(df, start=None, end=None):
     
     return df[(df['datetime'] >= start) & (df['datetime'] <= end)]
 
-def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end):
+def update_protocol(df, protocol_list):
+    """
+    Helper Function for extract_note_info() that updates the protocol column based on a list.
+    Not intended for modular use.
+    """
+    current_protocol = 0
+    current_index = 0
+
+    for index, row in df.iterrows():
+        # While there are more timestamps and the current row's datetime is greater than or equal to the timestamp
+        while (current_index < len(protocol_list) and 
+               row['datetime'] >= protocol_list[current_index][0]):
+            current_protocol = protocol_list[current_index][1]  # Update current protocol
+            current_index += 1  # Move to the next timestamp
+
+        df.at[index, 'protocol'] = current_protocol
+        
+    return df
+
+def save_dict(dict_protocol, participant, datetime, value):
+    """
+    Helper Function for extract_note_info() that updates a dictionary based on parameters.
+    Not intended for modular use.
+    """
+    if participant is not None:
+        dict_protocol[participant][datetime] = value
+    else:
+        dict_protocol[1][datetime] = value
+        dict_protocol[2][datetime] = value
+    return dict_protocol
+
+def detect_start_end(notes_path):
+    """
+    Automatically detect enter and exit from the chamber based on the notefile and returns the times for the two participants
+
+    Args:
+        notes_path (string): path to the note file
+
+    Returns:
+        dictionary: dictionary of participant/room 1 and 2 and for each a touple (start, end) time, None if not possible to find
+    """    
+    keywords_dict = {
+        'end': ["ud", "exit", "out"], #maybe as added safety check, check that it is the last/first note for that participant
+        'start': ["ind i kammer", "enter", "ind", "entry"]
+    }
+    
+    # read the note file into a pandas Dataframe
+    notes_content = open_file(notes_path)
+    lines = [line.strip().split('\t') for line in notes_content[2:]]
+    df_note = pd.DataFrame(lines[2:], columns=lines[0])
+    df_note = df_note.dropna()
+
+    # combine to datetime
+    df_note['datetime'] = pd.to_datetime(df_note['Date'] + ' ' + df_note['Time'], format='%m/%d/%y %H:%M:%S')
+    df_note = df_note.drop(columns=['Date', 'Time'])
+    
+    start_end_times = {1: (None, None), 2: (None, None)}
+    participants = []
+    
+    for index, row in df_note.iterrows():
+        comment = row["Comment"].lower()
+        participants = []
+        if comment.startswith("1"):
+            participants = [1]
+        elif comment.startswith("2"):
+            participants = [2]
+        else:
+            participants = [1,2]
+        for participant in participants:           
+            if start_end_times[participant][0] is None and any(word in comment for word in keywords_dict['start']):
+                first_two = df_note.head(2)
+                if any(row["datetime"] == time for time in first_two['datetime']):
+                    start_end_times[participant] = (row["datetime"], start_end_times[participant][1])
+            elif start_end_times[participant][1] is None and any(word in comment for word in keywords_dict['end']):
+                last_two = df_note.tail(2)
+                if any(row["datetime"] == time for time in last_two['datetime']):
+                    start_end_times[participant] = (start_end_times[participant][0], row["datetime"])
+                
+    return start_end_times
+
+def extract_note_info(notes_path, df_room1, df_room2):
+    """
+    Extracts and processes note information from a specified notes file, categorizing events 
+    based on predefined keywords, and updates two DataFrames with protocol information for 
+    different participants.
+
+    Parameters:
+    ----------
+    notes_path : str
+        The file path to the notes file containing event data.
+    df_room1 : pd.DataFrame
+        DataFrame associated with participant 1, to be updated with extracted protocol information.
+    df_room2 : pd.DataFrame
+        DataFrame associated with participant 2, to be updated with extracted protocol information.
+
+    Returns:
+    -------
+    tuple
+        A tuple containing two updated DataFrames: 
+        - df_room1: Updated DataFrame for participant 1 with protocol data.
+        - df_room2: Updated DataFrame for participant 2 with protocol data.
+
+    Notes:
+    -----
+    - The 'Comment' field is expected to start with '1' or '2' to indicate the participant, 
+      or it can be empty for both.
+    - The keywords dictionary can be modified to suit specific study protocols and includes 
+      multi-group checks for keyword matching.
+    """
+    
+    # Extend or change this dictionary to suit your study protocol. Words will be matched case-insensitive.
+    keywords_dict = {
+        'sleeping': (["seng", "sleeping", "bed", "sove", "soeve", "godnat"], 1),
+        'eating': ([["start", "begin", "began"],["maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad"]], 2),
+        'stop_sleeping' : (["vaagen", "vågen", "vaekket", "væk", "awake", "wake", "woken"], 0),
+        'stop_anything': (["faerdig", "færdig", "stop", "end", "finished", "slut"], 0),
+        'activity': ([["start", "begin", "began"], ["step", "exercise", "physicial activity", "active", "motion", "aktiv"]], 3),
+        'ree_start': ([["start", "begin", "began"], ["REE"]], 4),
+    }
+    
+    # read the note file into a pandas Dataframe
+    notes_content = open_file(notes_path)
+    lines = [line.strip().split('\t') for line in notes_content[2:]]
+    df_note = pd.DataFrame(lines[2:], columns=lines[0])
+    df_note = df_note.dropna()
+
+    # combine to datetime
+    df_note['datetime'] = pd.to_datetime(df_note['Date'] + ' ' + df_note['Time'], format='%m/%d/%y %H:%M:%S')
+    df_note = df_note.drop(columns=['Date', 'Time'])
+
+    time_pattern = r"([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5]\d"
+    dict_protocol = {1:{}, 2:{}}
+    
+    for index, row in df_note.iterrows():
+        participant = None
+        if row["Comment"].startswith("1"):
+            participant = 1
+        elif row["Comment"].startswith("2"):
+            participant = 2
+        for category, (keywords, value) in keywords_dict.items():
+            if isinstance(keywords[0], list):
+                # Multi-group check: at least one keyword from each sublist must match
+                if all(any(word.lower() in row['Comment'].lower() for word in group) for group in keywords):
+                    print("multi match", row["Comment"])
+                    # check if a different timestamp is written in the message and save the value there 
+                    # only checks first time stamp and only in format 6:45 or 06:45
+                    match = re.search(time_pattern, row['Comment'])
+                    if match:
+                        time_str = match[0]
+                        date_str = row['datetime'].date()
+                        new_datetime = pd.Timestamp(datetime.combine(date_str, datetime.strptime(time_str, "%H:%M").time()))
+                        dict_protocol = save_dict(dict_protocol, participant, new_datetime, value)
+                    else:
+                        dict_protocol = save_dict(dict_protocol, participant, row["datetime"], value)
+            else: 
+                # Single-group check: only one keyword needs to match
+                if any(word.lower() in row['Comment'].lower() for word in keywords):
+                    match = re.search(time_pattern, row['Comment'])
+                    if match:
+                        time_str = match[0]
+                        date_str = row['datetime'].date()
+                        new_datetime = pd.Timestamp(datetime.combine(date_str, datetime.strptime(time_str, "%H:%M").time()))
+                        dict_protocol = save_dict(dict_protocol, participant, new_datetime, value)
+                    else:
+                        dict_protocol = save_dict(dict_protocol, participant, row["datetime"], value)
+            
+    print(dict_protocol)
+    protocol_list_1 = sorted(dict_protocol[1].items())
+    protocol_list_2 = sorted(dict_protocol[2].items())
+
+    df_room1 = update_protocol(df_room1, protocol_list_1)
+    df_room2 = update_protocol(df_room2, protocol_list_2)
+
+    return df_room1, df_room2
+
+def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath):
     """
     Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
 
@@ -244,19 +420,36 @@ def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, star
     df_filtered = df_filtered.drop(columns=['Date', 'Time'])
     df = df_filtered.join(df.drop(columns=df.filter(like='Date').columns).drop(columns=df.filter(like='Time').columns))
     
-    # Cut to only include desired rows (do before setting the relative time)
-    df = cut_rows(df, start, end)
-    
-    df = add_relative_time(df)
-    display(df)
     
     # Split dataset by room and add datetime to both
     df_room1 = df.filter(like='R1')
     df_room1['datetime'] = df['datetime']
-    df_room1['relative_time[min]'] = df['relative_time[min]']
     df_room2 = df.filter(like='R2')
     df_room2['datetime'] = df['datetime']
-    df_room2['relative_time[min]'] = df['relative_time[min]']
+    
+    # Cut to only include desired rows (do before setting the relative time) 
+    if start and end:
+        df_room1 = cut_rows(df_room1, start, end)
+        df_room2 = cut_rows(df_room1, start, end)
+    elif notefilepath:
+        se_times = detect_start_end(notefilepath)
+        start_1, end_1 = se_times[1]
+        start_2, end_2 = se_times[2]
+        if start:
+            start_1 = start
+            start_2 = start
+        if end:
+            end_1 = end
+            end_2 = end
+        df_room1 = cut_rows(df_room1, start_1, end_1)
+        df_room2 = cut_rows(df_room2, start_2, end_2)
+        print("Starting time for room 1 is", start_1, "and end", end_1, "and for room 2 start is", start_2, "and end", end_2)
+    else:
+        df_room1 = cut_rows(df_room1, start, end)
+        df_room2 = cut_rows(df_room1, start, end)
+        
+    df_room1 = add_relative_time(df_room1)
+    df_room2 = add_relative_time(df_room2)
 
     if save_csv:
         room1_filename = f'{path_to_save}/{code_1}_WRIC_data.csv' if path_to_save else f'{code_1}_WRIC_data.csv'
@@ -385,7 +578,7 @@ def combine_measurements(df, method='mean'):
         
     return combined
 
-def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean", start=None, end=None):
+def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, path_to_save = None, combine = True, method = "mean", start=None, end=None, notefilepath = None):
     """
     Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
 
@@ -425,10 +618,13 @@ def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, 
     """     
     lines = open_file(filepath)
     code_1, code_2, R1_metadata, R2_metadata = extract_meta_data(lines, code, manual, save_csv, path_to_save)
-    df_room1, df_room2 = create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end)
+    df_room1, df_room2 = create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath)
     if combine:
         df_room1 = combine_measurements(df_room1, method)
         df_room2 = combine_measurements(df_room2, method)
+        
+    if notefilepath:
+        df_room1, df_room2 = extract_note_info(notefilepath, df_room1, df_room2)
         
     if save_csv:
         room1_filename = f'{path_to_save}/{code_1}_WRIC_data_combined.csv' if path_to_save else f'{code_1}_WRIC_data_combined.csv'

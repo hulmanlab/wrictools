@@ -98,7 +98,7 @@ cut_rows <- function(df, start = NULL, end = NULL) {
   #'
   #' @return data.frame
   #'   DataFrame with rows between the specified start and end dates, or the full DataFrame if both are NULL.
-  
+
   df$datetime <- as.POSIXct(df$datetime)
   
   if (is.null(start) && is.null(end)) {
@@ -115,8 +115,207 @@ cut_rows <- function(df, start = NULL, end = NULL) {
   return(df[df$datetime >= start & df$datetime <= end, ])
 }
 
+update_protocol <- function(df, protocol_list) {
+  # Helper function for extract_note_info() that updates the protocol column based on a data frame.
+  # Not intended for modular use.
+  current_protocol <- 0
+  current_index <- 1 
+  
+  # Ensure protocol_list is a data frame and check for empty data frame
+  if (nrow(protocol_list) == 0) {
+    return(df)  # If no protocols, return original DataFrame
+  }
+  
+  for (i in seq_len(nrow(df))) {
+    # While there are more timestamps and the current row's datetime is greater than or equal to the timestamp
+    while (current_index <= nrow(protocol_list) &&
+           df$datetime[i] >= protocol_list[current_index, "timestamp"]) {
+      current_protocol <- protocol_list[current_index, "protocol"]  # Update current protocol
+      current_index <- current_index + 1  # Move to the next timestamp
+    }
+    
+    df$protocol[i] <- current_protocol
+  }
+  
+  return(df)
+}
 
-create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end) {
+save_dict <- function(dict_protocol, participant, datetime, value) {
+  # Helper function for extract_note_info() that updates a list based on parameters.
+  # Not intended for modular use.
+  
+  if (!is.null(participant)) {
+    dict_protocol[[as.character(participant)]][[as.character(datetime)]] <- value
+  } else {
+    dict_protocol[["1"]][[as.character(datetime)]] <- value
+    dict_protocol[["2"]][[as.character(datetime)]] <- value
+  }
+  
+  return(dict_protocol)
+}
+
+detect_start_end <- function(notes_path) {
+#' Automatically detect enter and exit from the chamber based on the notefile.
+#' Returns the start and end times for two participants.
+#'
+#' @param notes_path string - path to the note file
+#' @return list - A list of two elements ("1" and "2"), each containing a tuple (start, end) time.
+#'                Returns NA if not possible to find start or end time.
+#' @keywords chamber entry exit detection
+  
+  keywords_dict <- list(
+    end = c("ud", "exit", "out"),
+    start = c("ind i kammer", "enter", "ind", "entry")
+  )
+  
+  # Read the note file and create a DataFrame
+  notes_content <- readLines(notes_path)
+  lines <- strsplit(notes_content[-c(1, 2)], "\t")
+  df_note <- data.frame(matrix(unlist(lines), ncol = length(lines[[1]]), byrow = TRUE))
+  colnames(df_note) <- unlist(lines[[1]])
+  df_note <- na.omit(df_note)
+  
+  # Combine to datetime
+  df_note$datetime <- as.POSIXct(
+    paste(df_note$Date, df_note$Time), format = "%m/%d/%y %H:%M:%S"
+  )
+  df_note <- df_note[, !(names(df_note) %in% c("Date", "Time"))]
+  
+  start_end_times <- list("1" = c(NA, NA), "2" = c(NA, NA))
+  
+  for (i in seq_len(nrow(df_note))) {
+    comment <- tolower(df_note$Comment[i])
+    participants <- if (grepl("^1", comment)) {
+      c("1")
+    } else if (grepl("^2", comment)) {
+      c("2")
+    } else {
+      c("1", "2")
+    }
+    
+    for (participant in participants) {
+      if (is.na(start_end_times[[participant]][1]) &&
+          any(grepl(paste(keywords_dict$start, collapse = "|"), comment))) {
+        first_two <- head(df_note$datetime, 2)
+        if (df_note$datetime[i] %in% first_two) {
+          start_end_times[[participant]][1] <- df_note$datetime[i]
+        }
+      } else if (is.na(start_end_times[[participant]][2]) &&
+                 any(grepl(paste(keywords_dict$end, collapse = "|"), comment))) {
+        last_two <- tail(df_note$datetime, 2)
+        if (df_note$datetime[i] %in% last_two) {
+          start_end_times[[participant]][2] <- df_note$datetime[i]
+        }
+      }
+    }
+  }
+  # convert back to POSIXct datetime format
+  start_end_times <- lapply(start_end_times, function(times) {
+    lapply(times, function(t) as.POSIXct(t, origin = "1970-01-01"))
+  })
+  return(start_end_times)
+}
+extract_note_info <- function(notes_path, df_room1, df_room2) {
+  #' Extracts and processes note information from a specified notes file, categorizing events 
+  #' based on predefined keywords, and updates two DataFrames with protocol information for 
+  #' different participants.
+  #'
+  #' @param notes_path string - The file path to the notes file containing event data.
+  #' @param df_room1 DataFrame - DataFrame for participant 1, to be updated with protocol info.
+  #' @param df_room2 DataFrame - DataFrame for participant 2, to be updated with protocol info.
+  #'
+  #' @return list - A list containing two updated DataFrames:
+  #'         - `df_room1`: Updated DataFrame for participant 1 with protocol data.
+  #'         - `df_room2`: Updated DataFrame for participant 2 with protocol data.
+  #'
+  #' @note
+  #' - The 'Comment' field should start with '1' or '2' to indicate the participant, 
+  #'   or it may be empty to indicate both.
+  #' - The `keywords_dict` can be modified to fit specific study protocols, 
+  #'   with multi-group checks for keyword matching.
+
+  # Define keywords dictionary
+  keywords_dict <- list(
+    sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat")), value = 1), 
+    eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
+    stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekket", "væk", "awake", "wake", "woken")), value = 0), 
+    stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end", "finished", "slut")), value = 0), 
+    activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
+    ree_start = list(keywords = list(c("start", "begin", "began"), c("REE")), value = 4)
+  )
+
+
+  # Load note file and create DataFrame
+  notes_content <- readLines(notes_path, encoding = "UTF-8")
+  lines <- strsplit(notes_content[-(1:2)], "\t")
+  df_note <- as.data.frame(do.call(rbind, lines[-(1:2)]), stringsAsFactors = FALSE)
+  colnames(df_note) <- unlist(lines[[1]])
+  df_note <- na.omit(df_note)
+
+  # Convert to datetime
+  df_note$datetime <- as.POSIXct(paste(df_note$Date, df_note$Time), format = "%m/%d/%y %H:%M:%S")
+  df_note <- df_note[, !names(df_note) %in% c("Date", "Time")]
+
+  # Time pattern and dictionary for protocols
+  time_pattern <- "([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5]\\d"
+  dict_protocol <- list("1" = list(), "2" = list())
+  
+  for (i in seq_len(nrow(df_note))) {
+    row <- df_note[i, ]
+    comment <- tolower(row$Comment)
+    comment <- iconv(comment, to = "UTF-8")
+    participant <- ifelse(grepl("^1", comment), "1", ifelse(grepl("^2", comment), "2", c("1", "2")))
+
+    for (category in names(keywords_dict)) {
+      entry <- keywords_dict[[category]]
+      keywords <- entry$keywords
+      value <- entry$value
+      
+      if (length(keywords) > 1) {
+        # Multi-group keyword check
+        if (all(sapply(keywords, function(group) any(grepl(paste(group, collapse = "|"), comment, ignore.case = TRUE))))) {
+          match <- regmatches(comment, regexpr(time_pattern, comment))
+          
+          if (length(match) > 0) {
+            new_datetime <- as.POSIXct(paste(as.Date(row$datetime), match), format = "%Y-%m-%d %H:%M")
+            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = new_datetime, protocol = value)))
+          } else {
+            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = row$datetime, protocol = value)))
+          }
+        }
+      } else {
+        # Single-group keyword check
+        if (any(sapply(keywords, function(group) any(grepl(paste(group, collapse = "|"), comment, ignore.case = TRUE))))) {
+          match <- regmatches(comment, regexpr(time_pattern, comment))
+          
+          if (length(match) > 0) {
+            new_datetime <- as.POSIXct(paste(as.Date(row$datetime), match), format = "%Y-%m-%d %H:%M")
+            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = new_datetime, protocol = value)))
+          } else {
+            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = row$datetime, protocol = value)))
+          }
+        }
+      }
+    }
+  }
+
+  # Convert dict_protocol into a data frame and sort it
+  protocol_list_1 <- do.call(rbind, lapply(dict_protocol[["1"]], function(x) data.frame(timestamp = x$timestamp, protocol = x$protocol)))
+  protocol_list_2 <- do.call(rbind, lapply(dict_protocol[["2"]], function(x) data.frame(timestamp = x$timestamp, protocol = x$protocol)))
+  
+  # Sort by timestamp
+  protocol_list_1 <- protocol_list_1[order(protocol_list_1$timestamp), ]
+  protocol_list_2 <- protocol_list_2[order(protocol_list_2$timestamp), ]
+
+  # Update DataFrames with sorted protocol lists
+  df_room1 <- update_protocol(df_room1, protocol_list_1)
+  df_room2 <- update_protocol(df_room2, protocol_list_2)
+
+  return(list(df_room1 = df_room1, df_room2 = df_room2))
+}
+
+
+create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath) {
 #' Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
 #' 
 #' @param filepath Path to the WRIC .txt file.
@@ -167,18 +366,44 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
   columns_to_drop <- c(grep("Time", names(df), ignore.case=FALSE, value = TRUE), grep("Date", names(df), ignore.case=FALSE, value = TRUE))
   df <- df %>% select(-all_of(columns_to_drop))
 
-  df <- cut_rows(df, start, end)
-
-  df <- add_relative_time(df)
-
   df_room1 <- df %>%
     select(contains('R1')) %>%
-    mutate(datetime = df$datetime) %>%
-    mutate(`relative_time[min]` = df$`relative_time[min]`) 
+    mutate(datetime = df$datetime)
   df_room2 <- df %>%
     select(contains('R2')) %>%
-    mutate(datetime = df$datetime) %>%
-    mutate(`relative_time[min]` = df$`relative_time[min]`) 
+    mutate(datetime = df$datetime)
+
+  # Cut to only include desired rows (do before setting the relative time)    
+  if (!is.null(start) && !is.null(end)) {
+    df_room1 <- cut_rows(df_room1, start, end)
+    df_room2 <- cut_rows(df_room2, start, end)
+  } else if (!is.null(notefilepath)) {
+    se_times <- detect_start_end(notefilepath)
+    start_1 <- as.POSIXct(se_times[[1]][[1]], origin = "1970-01-01")
+    end_1 <- as.POSIXct(se_times[[1]][[2]], origin = "1970-01-01")
+    start_2 <- as.POSIXct(se_times[[2]][[1]], origin = "1970-01-01")
+    end_2 <- as.POSIXct(se_times[[2]][[2]], origin = "1970-01-01")
+
+    if (!is.null(start)) {
+        start_1 <- start
+        start_2 <- start
+    }
+    if (!is.null(end)) {
+      end_1 <- end
+      end_2 <- end
+    }
+
+    df_room1 <- cut_rows(df_room1, start_1, end_1)
+    df_room2 <- cut_rows(df_room2, start_2, end_2)
+    print(paste("Starting time for room 1 is", start_1, "and end", end_1, 
+                "and for room 2 start is", start_2, "and end", end_2))
+  } else {
+    df_room1 <- cut_rows(df_room1, start, end)
+    df_room2 <- cut_rows(df_room2, start, end)
+  }
+
+  df_room1 <- add_relative_time(df_room1)
+  df_room2 <- add_relative_time(df_room2)
   
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data.csv"), paste0(code_1, "_WRIC_data.csv"))
@@ -270,7 +495,7 @@ combine_measurements <- function(df, method = 'mean') {
   return(combined)
 }
 
-preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL) {
+preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL, notefilepath = NULL) {
 #' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
 #' 
 #' @param filepath Path to the WRIC .txt file.
@@ -289,13 +514,19 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   R2_metadata <- result$R2_metadata
   code_1 <- result$code_1
   code_2 <- result$code_2
-  result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end)
+  result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath)
   df_room1 <- result$df_room1
   df_room2 <- result$df_room2
   
   if (combine) {
     df_room1 <- combine_measurements(df_room1, method)
     df_room2 <- combine_measurements(df_room2, method)
+  }
+
+  if (!is.null(notefilepath)) {
+    result <- extract_note_info(notefilepath, df_room1, df_room2)
+    df_room1 <- result$df_room1
+    df_room2 <- result$df_room2
   }
   
   if (save_csv) {

@@ -2,14 +2,17 @@ source('config.R')
 source('wric_preprocessing.R')
 library(RCurl)
 
-result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", start="2023-11-13 11:43:00", end="2023-11-13 12:09:00")
+# TODO: Check all cases - currently problem iwth converting end from notefile to POSIXct 
+result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", notefilepath="C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
 R1_metadata <- result$R1_metadata
 R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1
 df_room2 <- result$df_room2
 
-print("Done")
 str(df_room1)
+
+print("Done")
+#tr(df_room1)
 
 #dataframes <- preprocess_WRIC_files('id.csv', 'upload')
 
@@ -34,3 +37,14 @@ str(df_room1)
 #    returnFormat='json',
 #    file = file_content
 #)
+
+result = detect_start_end("C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt")
+#print(result)
+#print(result[1])
+
+notes_path = "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
+returns = extract_note_info(notes_path, df_room1, df_room2)
+df_room1 <- returns$df_room1
+df_room2 <- returns$df_room2
+#str(df_room1)
+
