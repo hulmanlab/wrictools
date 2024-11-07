@@ -236,12 +236,12 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
 
   # Define keywords dictionary
   keywords_dict <- list(
-    sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat")), value = 1), 
+    sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night")), value = 1), 
     eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
     stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekket", "væk", "awake", "wake", "woken")), value = 0), 
     stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end", "finished", "slut")), value = 0), 
     activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
-    ree_start = list(keywords = list(c("start", "begin", "began"), c("REE")), value = 4)
+    ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
   )
 
 

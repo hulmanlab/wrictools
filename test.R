@@ -48,3 +48,4 @@ df_room1 <- returns$df_room1
 df_room2 <- returns$df_room2
 #str(df_room1)
 
+?extract_note_info

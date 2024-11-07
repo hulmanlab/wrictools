@@ -296,12 +296,12 @@ def extract_note_info(notes_path, df_room1, df_room2):
     
     # Extend or change this dictionary to suit your study protocol. Words will be matched case-insensitive.
     keywords_dict = {
-        'sleeping': (["seng", "sleeping", "bed", "sove", "soeve", "godnat"], 1),
+        'sleeping': (["seng", "sleeping", "bed", "sove", "soeve", "godnat", "night"], 1),
         'eating': ([["start", "begin", "began"],["maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad"]], 2),
         'stop_sleeping' : (["vaagen", "vågen", "vaekket", "væk", "awake", "wake", "woken"], 0),
         'stop_anything': (["faerdig", "færdig", "stop", "end", "finished", "slut"], 0),
         'activity': ([["start", "begin", "began"], ["step", "exercise", "physicial activity", "active", "motion", "aktiv"]], 3),
-        'ree_start': ([["start", "begin", "began"], ["REE"]], 4),
+        'ree_start': ([["start", "begin", "began"], ["REE", "BEE", "BMR", "RMR", "RER"]], 4),
     }
     
     # read the note file into a pandas Dataframe
