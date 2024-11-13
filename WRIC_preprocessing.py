@@ -5,7 +5,7 @@ from config import config
 from datetime import datetime
 import requests
 import csv
-from IPython.display import display
+#from IPython.display import display
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', 5)
 
@@ -116,6 +116,7 @@ def open_file(filepath):
     FileNotFoundError
         If the file does not exist at the given filepath.
     """
+    lines = None
     if not filepath.lower().endswith('.txt'):
         raise TypeError("The file must be a .txt file.")
     try:
@@ -125,7 +126,7 @@ def open_file(filepath):
                 raise ValueError("The provided file is not the WRIC data file.")
     except FileNotFoundError as e:
         print("The filepath you provided does not lead to a file.")
-        
+    print("lines", lines) 
     return lines
 
 def add_relative_time(df, start_time=None):
@@ -208,9 +209,11 @@ def save_dict(dict_protocol, participant, datetime, value):
     Helper Function for extract_note_info() that updates a dictionary based on parameters.
     Not intended for modular use.
     """
+    print("add entry", participant, datetime, value)
     if participant is not None:
         dict_protocol[participant][datetime] = value
     else:
+        print("Participant is None")
         dict_protocol[1][datetime] = value
         dict_protocol[2][datetime] = value
     return dict_protocol
@@ -315,17 +318,20 @@ def extract_note_info(notes_path, df_room1, df_room2):
     df_note = df_note.drop(columns=['Date', 'Time'])
 
     time_pattern = r"([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5]\d"
+    drift_pattern = r"^\d{2}:\d{2}(:\d{2})?$"
     dict_protocol = {1:{}, 2:{}}
-    
+    drift = None
+
     for index, row in df_note.iterrows():
         participant = None
+        print(row["Comment"])
         if row["Comment"].startswith("1"):
             participant = 1
         elif row["Comment"].startswith("2"):
             participant = 2
         for category, (keywords, value) in keywords_dict.items():
+            # Multi-group check: at least one keyword from each sublist must match
             if isinstance(keywords[0], list):
-                # Multi-group check: at least one keyword from each sublist must match
                 if all(any(word.lower() in row['Comment'].lower() for word in group) for group in keywords):
                     print("multi match", row["Comment"])
                     # check if a different timestamp is written in the message and save the value there 
@@ -338,9 +344,8 @@ def extract_note_info(notes_path, df_room1, df_room2):
                         dict_protocol = save_dict(dict_protocol, participant, new_datetime, value)
                     else:
                         dict_protocol = save_dict(dict_protocol, participant, row["datetime"], value)
-            else: 
-                # Single-group check: only one keyword needs to match
-                if any(word.lower() in row['Comment'].lower() for word in keywords):
+            # Single-group check: only one keyword needs to match
+            elif any(word.lower() in row['Comment'].lower() for word in keywords):
                     match = re.search(time_pattern, row['Comment'])
                     if match:
                         time_str = match[0]
@@ -349,10 +354,30 @@ def extract_note_info(notes_path, df_room1, df_room2):
                         dict_protocol = save_dict(dict_protocol, participant, new_datetime, value)
                     else:
                         dict_protocol = save_dict(dict_protocol, participant, row["datetime"], value)
-            
+            # no keyword matches, but it is the first entry -> check for time drift parameter
+            elif index == 0:
+                if re.fullmatch(drift_pattern, row['Comment']):
+                    date_str = row['datetime'].date()
+                    new_datetime = pd.Timestamp(datetime.combine(date_str, pd.Timestamp(row["Comment"]).time()))
+                    drift = new_datetime - row["datetime"]
+                    print("drift", drift)
+                break
+                
+                
+
     print(dict_protocol)
     protocol_list_1 = sorted(dict_protocol[1].items())
     protocol_list_2 = sorted(dict_protocol[2].items())
+
+    print(protocol_list_1)
+
+    # Adding the time drift parameter
+    if drift != None:
+        print("Yes drift is not None")
+        protocol_list_1 = [(ts + drift, value) for ts, value in protocol_list_1]
+        protocol_list_2 = [(ts + drift, value) for ts, value in protocol_list_2]
+
+    print(protocol_list_1)
 
     df_room1 = update_protocol(df_room1, protocol_list_1)
     df_room2 = update_protocol(df_room2, protocol_list_2)

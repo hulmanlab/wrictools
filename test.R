@@ -3,7 +3,7 @@ source('wric_preprocessing.R')
 library(RCurl)
 
 # TODO: Check all cases - currently problem iwth converting end from notefile to POSIXct 
-result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", notefilepath="C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
+result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", notefilepath="/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/02LK_v2_treat0_wric1min_04HH_v2_treat1_note.txt") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
 R1_metadata <- result$R1_metadata
 R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1
@@ -38,14 +38,14 @@ print("Done")
 #    file = file_content
 #)
 
-result = detect_start_end("C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt")
+#result = detect_start_end("C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt")
 #print(result)
 #print(result[1])
 
-notes_path = "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
-returns = extract_note_info(notes_path, df_room1, df_room2)
-df_room1 <- returns$df_room1
-df_room2 <- returns$df_room2
+# notes_path = "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
+# returns = extract_note_info(notes_path, df_room1, df_room2)
+# df_room1 <- returns$df_room1
+# df_room2 <- returns$df_room2
 #str(df_room1)
 
 ?extract_note_info
