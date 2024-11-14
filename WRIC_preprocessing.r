@@ -238,12 +238,11 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
   keywords_dict <- list(
     sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night")), value = 1), 
     eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
-    stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekket", "væk", "awake", "wake", "woken")), value = 0), 
-    stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end", "finished", "slut")), value = 0), 
+    stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "awake", "wake", "woken")), value = 0), 
+    stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end ", "finished", "slut")), value = 0), 
     activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
     ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
   )
-
 
   # Load note file and create DataFrame
   notes_content <- readLines(notes_path, encoding = "UTF-8")

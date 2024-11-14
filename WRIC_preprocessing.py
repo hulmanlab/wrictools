@@ -298,8 +298,8 @@ def extract_note_info(notes_path, df_room1, df_room2):
     keywords_dict = {
         'sleeping': (["seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep"], 1),
         'eating': ([["start", "begin", "began"],["maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad"]], 2),
-        'stop_sleeping' : (["vaagen", "vågen", "vaekket", "væk", "awake", "wake", "woken"], 0),
-        'stop_anything': (["faerdig", "færdig", "stop", "end", "finished", "slut"], 0),
+        'stop_sleeping' : (["vaagen", "vågen", "vaekke", "væk", "awake", "wake", "woken"], 0),
+        'stop_anything': (["faerdig", "færdig", "stop", "end ", "finished", "slut"], 0),
         'activity': ([["start", "begin", "began"], ["step", "exercise", "physicial activity", "active", "motion", "aktiv"]], 3),
         'ree_start': ([["start", "begin", "began"], ["REE", "BEE", "BMR", "RMR", "RER"]], 4),
     }

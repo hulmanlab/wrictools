@@ -31,7 +31,7 @@ wric_dict = {'01JJ_wric1min_v1_treat0.txt' : '01JJ_wric1min_v1_note_treat0.txt',
     '02LK_wric1min_v1_treat1.txt' : '02LK_wric1min_v1_note_treat1.txt', 
     '03HA_v1_treat1_wric1min_04HH_v1_treat0.txt' : '03HA_v1_treat1_wric1min_04HH_v1_treat0_note.txt', 
     '03HA_wric1min_v2_treat0.txt' : '03HA_wric1min_v2_note_treat0.txt', 
-    #'05PM_wric1min_v1_treat0.txt' : '05PM_wric1min_v1_note_treat0.txt', #date and time sync issues across measure and rooms
+    #'05PM_wric1min_v1_treat0.txt' : '05PM_wric1min_v1_note_treat0.txt', #date and time sync issues across measure and rooms (also the switcheroo patient)
     '05PM_wric1min_v2_treat1.txt' : '05PM_wric1min_v2_note_treat1.txt', 
     '06ML_v2_treat1_wric1min_09NQ_v1_treat1.txt' : '06ML_v2_treat1_wric1min_09NQ_v1_treat1_note.txt', 
     '06ML_wric1min_v1_treat0.txt' : '06ML_wric1min_v1_note_treat0.txt', 
@@ -44,9 +44,13 @@ wric_dict = {'01JJ_wric1min_v1_treat0.txt' : '01JJ_wric1min_v1_note_treat0.txt',
 
 ds = ["01JJ", "02LK", "03HA", "04HH", "05PM", "06ML", "07AB", "08MG", "09NQ", "10JK"]
 treatments = [0, 1]
-base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/"
-note_base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
-path_to_save = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+#base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/"
+#note_base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
+#path_to_save = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+
+base_folder = "D:/Simon_CIRCLE/WRIC/"
+note_base_folder = "D:/Simon_CIRCLE/WRIC/Notes_Processed/"
+path_to_save = "D:/Simon_CIRCLE/WRIC/processed"
 
 for filepath, notepath in wric_dict.items():
     print(filepath, notepath)
