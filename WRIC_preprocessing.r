@@ -100,15 +100,13 @@ cut_rows <- function(df, start = NULL, end = NULL) {
   #'   DataFrame with rows between the specified start and end dates, or the full DataFrame if both are NULL.
 
   df$datetime <- as.POSIXct(df$datetime)
-  
-  if (is.null(start) && is.null(end)) {
+  if (is.na(start) && is.na(end)) {
     return(df) 
-  } else if (is.null(start)) {
+  } else if (is.na(start)) {
     start <- min(df$datetime, na.rm = TRUE) 
-  } else if (is.null(end)) {
+  } else if (is.na(end)) {
     end <- max(df$datetime, na.rm = TRUE)
   }
-  
   start <- as.POSIXct(start)
   end <- as.POSIXct(end)
   
@@ -257,13 +255,27 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
 
   # Time pattern and dictionary for protocols
   time_pattern <- "([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5]\\d"
+  drift_pattern <- "^\\d{2}:\\d{2}(:\\d{2})?$"
   dict_protocol <- list("1" = list(), "2" = list())
+  drift <- NULL
   
   for (i in seq_len(nrow(df_note))) {
     row <- df_note[i, ]
     comment <- tolower(row$Comment)
     comment <- iconv(comment, to = "UTF-8")
     participant <- ifelse(grepl("^1", comment), "1", ifelse(grepl("^2", comment), "2", c("1", "2")))
+
+    # Check for time drift in the first entry
+    if (i == 1 && grepl(drift_pattern, row$Comment)) {
+      new_datetime <- as.POSIXct(paste(as.Date(row$datetime), row$Comment), format = "%Y-%m-%d %H:%M:%S")
+      drift <- new_datetime - row$datetime
+      
+      message("Drift: ", drift)
+      # Apply drift to dataframes
+      df_room1$datetime <- df_room1$datetime + drift
+      df_room2$datetime <- df_room2$datetime + drift
+      next
+    }
 
     for (category in names(keywords_dict)) {
       entry <- keywords_dict[[category]]
@@ -306,6 +318,11 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
   protocol_list_1 <- protocol_list_1[order(protocol_list_1$timestamp), ]
   protocol_list_2 <- protocol_list_2[order(protocol_list_2$timestamp), ]
 
+  # Adding the time drift parameter
+  if (!is.null(drift)){
+    protocol_list_1$timestamp <- protocol_list_1$timestamp + drift
+    protocol_list_2$timestamp <- protocol_list_2$timestamp + drift
+  }
   # Update DataFrames with sorted protocol lists
   df_room1 <- update_protocol(df_room1, protocol_list_1)
   df_room2 <- update_protocol(df_room2, protocol_list_2)
@@ -328,7 +345,7 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
 
   data_start_index <- which(grepl("^Room 1 Set 1", lines)) + 1
   df <- read_tsv(filepath, skip = data_start_index, col_names = FALSE)
-
+  
     # Drop columns with all NA values
   df <- df %>% select(where(~ !all(is.na(.))))
   
@@ -343,7 +360,7 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     }
   }
   colnames(df) <- new_columns
-
+ 
   # Check for consistent Date and Time columns
   date_columns <- df %>% select(contains('Date'))
   time_columns <- df %>% select(contains('Time'))
@@ -372,6 +389,8 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     select(contains('R2')) %>%
     mutate(datetime = df$datetime)
 
+  
+  
   # Cut to only include desired rows (do before setting the relative time)    
   if (!is.null(start) && !is.null(end)) {
     df_room1 <- cut_rows(df_room1, start, end)
@@ -391,7 +410,6 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
       end_1 <- end
       end_2 <- end
     }
-
     df_room1 <- cut_rows(df_room1, start_1, end_1)
     df_room2 <- cut_rows(df_room2, start_2, end_2)
     print(paste("Starting time for room 1 is", start_1, "and end", end_1, 
@@ -400,7 +418,6 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     df_room1 <- cut_rows(df_room1, start, end)
     df_room2 <- cut_rows(df_room2, start, end)
   }
-
   df_room1 <- add_relative_time(df_room1)
   df_room2 <- add_relative_time(df_room2)
   
