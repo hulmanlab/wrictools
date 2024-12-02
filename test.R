@@ -3,7 +3,7 @@ source('wric_preprocessing.R')
 library(RCurl)
 
 # TODO: Check all cases - currently problem iwth converting end from notefile to POSIXct 
-result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", notefilepath="C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
+result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", notefilepath="./example_data/note.txt") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
 R1_metadata <- result$R1_metadata
 R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1

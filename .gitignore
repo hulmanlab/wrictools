@@ -172,3 +172,4 @@ config.r
 cacert.pem
 
 tmp/
+R_tutorial_files/

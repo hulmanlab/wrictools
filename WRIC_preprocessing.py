@@ -171,12 +171,11 @@ def cut_rows(df, start=None, end=None):
         DataFrame with rows between the specified start and end dates.
     """
     df['datetime'] = pd.to_datetime(df['datetime'])
-    
-    if start is None and end is None:
+    if pd.isna(start) and pd.isna(end):
         return df 
-    elif start is None:
+    elif pd.isna(start):
         start = df['datetime'].min()
-    elif end is None:
+    elif pd.isna(end):
         end = df['datetime'].max()
         
     start = pd.to_datetime(start)
@@ -298,7 +297,7 @@ def extract_note_info(notes_path, df_room1, df_room2):
     keywords_dict = {
         'sleeping': (["seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep"], 1),
         'eating': ([["start", "begin", "began"],["maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad"]], 2),
-        'stop_sleeping' : (["vaagen", "vågen", "vaekke", "væk", "awake", "wake", "woken"], 0),
+        'stop_sleeping' : (["vaagen", "vågen", "vaekke", "væk", "wake", "woken", "vaagnet"], 0),
         'stop_anything': (["faerdig", "færdig", "stop", "end ", "finished", "slut"], 0),
         'activity': ([["start", "begin", "began"], ["step", "exercise", "physicial activity", "active", "motion", "aktiv"]], 3),
         'ree_start': ([["start", "begin", "began"], ["REE", "BEE", "BMR", "RMR", "RER"]], 4),
@@ -468,12 +467,6 @@ def create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, star
         
     df_room1 = add_relative_time(df_room1)
     df_room2 = add_relative_time(df_room2)
-
-    if save_csv:
-        room1_filename = f'{path_to_save}/{code_1}_WRIC_data.csv' if path_to_save else f'{code_1}_WRIC_data.csv'
-        room2_filename = f'{path_to_save}/{code_2}_WRIC_data.csv' if path_to_save else f'{code_2}_WRIC_data.csv'
-        df_room1.to_csv(room1_filename, index=False)
-        df_room2.to_csv(room2_filename, index=False)
         
     return df_room1, df_room2
 
@@ -645,8 +638,8 @@ def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, 
         df_room1, df_room2 = extract_note_info(notefilepath, df_room1, df_room2)
         
     if save_csv:
-        room1_filename = f'{path_to_save}/{code_1}_WRIC_data_combined.csv' if path_to_save else f'{code_1}_WRIC_data_combined.csv'
-        room2_filename = f'{path_to_save}/{code_2}_WRIC_data_combined.csv' if path_to_save else f'{code_2}_WRIC_data_combined.csv'
+        room1_filename = f'{path_to_save}/{code_1}_WRIC_data.csv' if path_to_save else f'{code_1}_WRIC_data.csv'
+        room2_filename = f'{path_to_save}/{code_2}_WRIC_data.csv' if path_to_save else f'{code_2}_WRIC_data.csv'
         df_room1.to_csv(room1_filename, index=False)
         df_room2.to_csv(room2_filename, index=False)
     

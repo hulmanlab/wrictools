@@ -52,6 +52,10 @@ result <- preprocess_WRIC_file(
     end=NULL
 )
 ```
+
+#TODO: Explain created files, also add local file extraction without use of RedCap
+
+
 ## Preprocess multiple files on RedCap
 If you want to preprocess multiple files and access them on the RedCap Server using a csv-file containing the record IDs:
 

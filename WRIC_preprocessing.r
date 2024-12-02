@@ -234,9 +234,9 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
 
   # Define keywords dictionary
   keywords_dict <- list(
-    sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night")), value = 1), 
+    sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep")), value = 1), 
     eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
-    stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "awake", "wake", "woken")), value = 0), 
+    stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "wake", "woken", "vaagnet")), value = 0), 
     stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end ", "finished", "slut")), value = 0), 
     activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
     ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
@@ -421,13 +421,6 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
   df_room1 <- add_relative_time(df_room1)
   df_room2 <- add_relative_time(df_room2)
   
-  if (save_csv) {
-    room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data.csv"), paste0(code_1, "_WRIC_data.csv"))
-    room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data.csv"), paste0(code_2, "_WRIC_data.csv"))
-    write.csv(df_room1, room1_filename, row.names = FALSE)
-    write.csv(df_room2, room2_filename, row.names = FALSE)
-  }
-  
   return(list(df_room1 = df_room1, df_room2 = df_room2))
 }
 
@@ -546,8 +539,8 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   }
   
   if (save_csv) {
-    room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data_combined.csv"), paste0(code_1, "_WRIC_data_combined.csv"))
-    room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data_combined.csv"), paste0(code_2, "_WRIC_data_combined.csv"))
+    room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data.csv"), paste0(code_1, "_WRIC_data.csv"))
+    room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data.csv"), paste0(code_2, "_WRIC_data.csv"))
     write.csv(df_room1, room1_filename, row.names = FALSE)
     write.csv(df_room2, room2_filename, row.names = FALSE)
   }
