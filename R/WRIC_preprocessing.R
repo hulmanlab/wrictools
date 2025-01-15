@@ -516,6 +516,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
 #' @param method Method for combining measurements ("mean", "median", "s1", "s2", "min", "max").
 #' @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row e.g "2023-11-13 11:43:00"
 #' @param end character or POSIXct or NULL, rows after this will be removed, if NULL takes last rows e.g "2023-11-13 11:43:00"
+#' @param notefilepath String, Directory path of the corresponding note file (.txt)
 #' @return A list containing the metadata and DataFrames for Room 1 and Room 2.
   lines <- open_file(filepath)
   result <- extract_meta_data(lines, code, manual, save_csv, path_to_save)

@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 import numpy as np
-from config import config
+from Python.config import config
 from datetime import datetime
 import requests
 import csv
@@ -619,6 +619,8 @@ def preprocess_WRIC_file(filepath, code = "id", manual = None, save_csv = True, 
         Start datetime; rows before this will be removed. If None, uses the earliest datetime in the DataFrame.
     end: str or datetime or None, optional
         End datetime; rows after this will be removed. If None, uses the latest datetime in the DataFrame.
+    notefilepath: str, optional
+        Path to corresponding notefile (txt)
 
     Returns:
     -------
