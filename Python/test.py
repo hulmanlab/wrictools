@@ -1,6 +1,9 @@
 import WRIC_preprocessing as wric
 import pandas as pd
 pd.options.mode.chained_assignment = None  # Disable the warning
+
+#TODO: Check wether without notefile start and end also throw an error (I think R specific handeling of null/nan differences)
+
 # from IPython.display import display
 
 #notefilepath="/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/02LK_v2_treat0_wric1min_04HH_v2_treat1_note.txt"

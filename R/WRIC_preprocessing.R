@@ -1,4 +1,5 @@
-source('config.R')
+# source('config.R')
+# comment this back in to use the RedCap functionalities
 library(RCurl)
 library(dplyr)
 library(readr)
@@ -36,6 +37,21 @@ extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
 #' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
 #' @return A list containing the Room 1 code, Room 2 code, and DataFrames for R1_metadata and R2_metadata.
   header_lines <- lapply(lines[4:7], function(line) unlist(strsplit(trimws(line), "\t")))
+
+  # Standardize lengths to avoid errors - might have to rename your documents manually if there are eg IDs missing
+  adjust_length <- function(data, reference) {
+    length_diff <- length(reference) - length(data)
+    if (length_diff > 0) {
+      data <- c(data, rep(NA, length_diff))  # Pad with NAs if too short (no comment)
+    } else if (length_diff < 0) {
+      data <- data[1:length(reference)]  # Truncate if too long (new lines in comment)
+    }
+    return(data)
+  }
+
+  header_lines[[2]] <- adjust_length(header_lines[[2]], header_lines[[1]][-1])
+  header_lines[[4]] <- adjust_length(header_lines[[4]], header_lines[[3]][-1])
+
   data_R1 <- setNames(as.list(header_lines[[2]]), header_lines[[1]][-1])
   data_R2 <- setNames(as.list(header_lines[[4]]), header_lines[[3]][-1])
   
@@ -100,7 +116,7 @@ cut_rows <- function(df, start = NULL, end = NULL) {
   #'   DataFrame with rows between the specified start and end dates, or the full DataFrame if both are NULL.
 
   df$datetime <- as.POSIXct(df$datetime)
-  if (is.na(start) && is.na(end)) {
+  if ((is.null(start) || is.na(start)) && (is.null(end) || is.na(end))){
     return(df) 
   } else if (is.na(start)) {
     start <- min(df$datetime, na.rm = TRUE) 
