@@ -6,8 +6,6 @@ If you instead want to use the functions in Python, please click below.
 
 [![pt-br](https://img.shields.io/badge/Python-yellow.svg)](https://github.com/NinaZiegenbein/WRIC_processing/blob/main/README.python.md)
 
-First we need to import the R file as a source to be able to use the functions (see Quickstart).
-
 ## Quickstart
 ```R
 source('wric_processor.R')
@@ -23,6 +21,51 @@ The code needs the following packages. You can easily install them with `install
 - [readr](https://readr.tidyverse.org/)
 - [RCurl](https://cran.r-project.org/web/packages/RCurl/index.html)
 - [stringr](https://stringr.tidyverse.org/)
+
+## Getting Started
+
+To get started with the WRIC preprocessing code in R, follow these steps:
+
+### 1. **Download the File (or Entire Repository)**
+If you only want the functions for (pre)processing your files, it is enough to download [this R file](https://github.com/hulmanlab/WRIC_processing/blob/main/R/WRIC_preprocessing.R). If you want to also check out test files, use the example data, config example etc. I would recommend downloading the entire repository. There are two options to do so:
+
+- **Clone the repository with Git:**  
+  If you don't have Git installed, follow the [installation instructions here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).  
+  Once Git is installed, run the following command in your terminal or command prompt to clone the repository:
+  
+  `git clone https://github.com/hulmanlab/WRIC_processing.git`
+
+  The advantage is that you just need to run `git pull` and all updates I have "pushed" (uploaded to the repository) will be downloaded aka updated.
+
+- **Download the repository as a ZIP file:**  
+  Alternatively, you can download the repository as a ZIP file from [here](https://github.com/hulmanlab/WRIC_processing/archive/refs/heads/main.zip) and unzip it on your local machine without needing to install GitHub and making an account etc.
+
+### 2. **Set Your Working Directory in RStudio**
+After you’ve downloaded or cloned the repository, open RStudio. You will need to set your working directory to the folder where the R files are located (or the folder containing the repository you downloaded). This ensures R can locate the necessary files and dependencies without error messages.
+
+- To set your working directory, you can use the following command in the RStudio console:
+  
+  `setwd("/path/to/WRIC_processing.R")`
+  
+  Replace `/path/to/WRIC_processing.R` with the actual path to the folder where the repository is located on your machine. You can also navigate to the desired directory manually in RStudio:
+  - Go to the **Session** menu.
+  - Click **Set Working Directory** > **Choose Directory**.
+  - Select the folder where the repository is located.
+
+If you do not want to do that, you can also specify the path infront of the source command you see below.
+
+### 3. **Import the Script**
+Once your working directory is set, you can load the script to access the functions.
+
+In the RStudio console, type the following command: `source('WRIC_preprocessing.R')`
+
+or `source('R/WRIC_preprocessing.R')` if you have downloaded the entire repository.
+  
+This imports the file so you can start using the functions inside it.
+
+### 4. **Run the Functions**
+Now that the script is loaded, you can start using the functions as described below. If you need more detailed usage, refer to the function docstrings or use `?function_name` to access the documentation for each function.
+
 
 ## Preprocess Local WRIC file(s)
 If you have a WRIC (txt) file locally and want to preprocess it: That means reading the metadata at the top of the file, extracting the data from the txt format into a csv format, only including certain rows between start and end of the study, adding a relative time measurement, combining the two measurements, splitting by room1 and room2 and saving the data as a csv. Some of these actions are optional, so you can choose based on the parameters you provide.
@@ -95,7 +138,7 @@ df_room2 <- result$df_room2
 - At the same place you can find your Token after your request has been approved and the token generated
 
 ## Uploading Data to RedCap
-You can use function `upload_file_to_redcap(fielpath, record_id, fieldname)` to upload a file to a specific record and fieldname in RedCap. You need to have set-up your config file.
+You can use function `upload_file_to_redcap(filepath, record_id, fieldname)` to upload a file to a specific record and fieldname in RedCap. You need to have set-up your config file.
 
 # Support, Maintenance and Future Work
 For any issues, questions, or suggestions feel free to reach out to Nina Ziegenbein at nina.ziegenbein@rm.dk.
