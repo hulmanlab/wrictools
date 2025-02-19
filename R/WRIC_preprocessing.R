@@ -1,9 +1,14 @@
-# source('config.R')
-# comment this back in to use the RedCap functionalities
+tryCatch({
+  source("config.R")
+}, error = function(e) {
+  cat("RedCap API configuration file 'config.R' not found. Proceeding without.\n")
+})
+
 library(RCurl)
 library(dplyr)
 library(readr)
 library(stringr)
+library(roxygen2)
 
 check_code <- function(code, manual, R1_metadata, R2_metadata) {
 #' Check the subject ID code and return corresponding Room 1 and Room 2 codes.
@@ -663,4 +668,29 @@ preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NUL
   }
   
   return(dataframes)
+}
+
+doc <- function(func_name) {
+#' Returns the documentation for this function from the function_docs.R file. This is a temporary option, until this is made into a package.
+#' 
+#' @param funcname String, name of the function
+  func <- get(func_name, envir = .GlobalEnv)
+  doc <- attr(func, "doc")
+  if (!is.null(doc)) {
+    cat(doc, "\n")
+  } else {
+    cat("No documentation available.\n")
+  }
+}
+
+
+# Dynamically attach documentation to all functions (if doc_strings is available)
+if (exists("doc_strings", envir = .GlobalEnv)) {
+  print(doc_strings)
+  for (func_name in names(doc_strings)) {
+    if (exists(func_name, envir = .GlobalEnv)) {
+      func <- get(func_name, envir = .GlobalEnv)
+      attr(func, "doc") <- doc_strings[[func_name]]
+    }
+  }
 }
