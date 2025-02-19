@@ -229,7 +229,7 @@ detect_start_end <- function(notes_path) {
   })
   return(start_end_times)
 }
-extract_note_info <- function(notes_path, df_room1, df_room2) {
+extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NULL) {
   #' Extracts and processes note information from a specified notes file, categorizing events 
   #' based on predefined keywords, and updates two DataFrames with protocol information for 
   #' different participants.
@@ -237,7 +237,7 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
   #' @param notes_path string - The file path to the notes file containing event data.
   #' @param df_room1 DataFrame - DataFrame for participant 1, to be updated with protocol info.
   #' @param df_room2 DataFrame - DataFrame for participant 2, to be updated with protocol info.
-  #'
+  #' @param keywords_dict nested list - used to identify keywords to extract protocol values
   #' @return list - A list containing two updated DataFrames:
   #'         - `df_room1`: Updated DataFrame for participant 1 with protocol data.
   #'         - `df_room2`: Updated DataFrame for participant 2 with protocol data.
@@ -249,14 +249,16 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
   #'   with multi-group checks for keyword matching.
 
   # Define keywords dictionary
-  keywords_dict <- list(
-    sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep")), value = 1), 
-    eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
-    stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "wake", "woken", "vaagnet")), value = 0), 
-    stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end ", "finished", "slut")), value = 0), 
-    activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
-    ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
-  )
+  if (is.null(keywords_dict)) {
+    keywords_dict <- list(
+      sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep")), value = 1), 
+      eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
+      stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "wake", "woken", "vaagnet")), value = 0), 
+      stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end ", "finished", "slut")), value = 0), 
+      activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
+      ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
+    )
+  }
 
   # Load note file and create DataFrame
   notes_content <- readLines(notes_path, encoding = "UTF-8")
@@ -345,6 +347,8 @@ extract_note_info <- function(notes_path, df_room1, df_room2) {
 
   return(list(df_room1 = df_room1, df_room2 = df_room2))
 }
+
+
 
 
 create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath) {
@@ -520,7 +524,7 @@ combine_measurements <- function(df, method = 'mean') {
   return(combined)
 }
 
-preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL, notefilepath = NULL) {
+preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL, notefilepath = NULL, keywords_dict = NULL) {
 #' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
 #' 
 #' @param filepath Path to the WRIC .txt file.
@@ -533,6 +537,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
 #' @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row e.g "2023-11-13 11:43:00"
 #' @param end character or POSIXct or NULL, rows after this will be removed, if NULL takes last rows e.g "2023-11-13 11:43:00"
 #' @param notefilepath String, Directory path of the corresponding note file (.txt)
+#' @param keywords_dict Nested List, used to extract protocol values from note file
 #' @return A list containing the metadata and DataFrames for Room 1 and Room 2.
   lines <- open_file(filepath)
   result <- extract_meta_data(lines, code, manual, save_csv, path_to_save)
@@ -550,7 +555,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   }
 
   if (!is.null(notefilepath)) {
-    result <- extract_note_info(notefilepath, df_room1, df_room2)
+    result <- extract_note_info(notefilepath, df_room1, df_room2, keywords_dict)
     df_room1 <- result$df_room1
     df_room2 <- result$df_room2
   }
