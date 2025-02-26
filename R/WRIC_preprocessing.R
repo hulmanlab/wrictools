@@ -1,8 +1,9 @@
-tryCatch({
+if (file.exists("config.R")) {
   source("config.R")
-}, error = function(e) {
+} else {
   cat("RedCap API configuration file 'config.R' not found. Proceeding without.\n")
-})
+}
+
 
 library(RCurl)
 library(dplyr)
