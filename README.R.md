@@ -89,7 +89,7 @@ result <- preprocess_WRIC_file(
     manual=NULL, 
     save_csv=TRUE, 
     path_to_save=NULL, 
-    combine=NULL, 
+    combine=TRUE, 
     method="mean",
     start=NULL,
     end=NULL,

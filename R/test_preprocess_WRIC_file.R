@@ -19,7 +19,7 @@ test_that("preprocess_WRIC_file does not throw errors with various inputs", {
 
   # Test with specific filepath and code parameter
   expect_error({
-    result <- preprocess_WRIC_file("/Users/au698484/Documents/data_wric_no_comment.txt")
+    result <- preprocess_WRIC_file("./example_data/data_no_comment.txt")
   }, NA)
 
   expect_error({
@@ -80,6 +80,12 @@ test_that("preprocess_WRIC_file does not throw errors with various inputs", {
   expect_error({
     result <- preprocess_WRIC_file("./example_data/data.txt", 
                                    combine = TRUE)
+  }, NA)
+
+  # Test with filepath and combine = FALSE
+  expect_error({
+    result <- preprocess_WRIC_file("./example_data/data.txt", 
+                                   combine = FALSE)
   }, NA)
   
 })

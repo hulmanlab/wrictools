@@ -216,13 +216,13 @@ detect_start_end <- function(notes_path) {
     for (participant in participants) {
       if (is.na(start_end_times[[participant]][1]) &&
           any(grepl(paste(keywords_dict$start, collapse = "|"), comment))) {
-        first_two <- head(df_note$datetime, 2)
-        if (df_note$datetime[i] %in% first_two) {
+        first_three <- head(df_note$datetime, 4) #there is one empty line, one for clock check and then up to two saying when there going in, rest is not searched
+        if (df_note$datetime[i] %in% first_three) {
           start_end_times[[participant]][1] <- df_note$datetime[i]
         }
       } else if (is.na(start_end_times[[participant]][2]) &&
                  any(grepl(paste(keywords_dict$end, collapse = "|"), comment))) {
-        last_two <- tail(df_note$datetime, 2)
+        last_two <- tail(df_note$datetime, 2) #only checking the last two rows
         if (df_note$datetime[i] %in% last_two) {
           start_end_times[[participant]][2] <- df_note$datetime[i]
         }

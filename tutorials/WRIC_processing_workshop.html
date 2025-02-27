@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Nina Ziegenbein">
+
+<title>WRIC Data Processing Workshop</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="WRIC_processing_workshop_files/libs/clipboard/clipboard.min.js"></script>
+<script src="WRIC_processing_workshop_files/libs/quarto-html/quarto.js"></script>
+<script src="WRIC_processing_workshop_files/libs/quarto-html/popper.min.js"></script>
+<script src="WRIC_processing_workshop_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="WRIC_processing_workshop_files/libs/quarto-html/anchor.min.js"></script>
+<link href="WRIC_processing_workshop_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="WRIC_processing_workshop_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="WRIC_processing_workshop_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="WRIC_processing_workshop_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="WRIC_processing_workshop_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">WRIC Data Processing Workshop</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Nina Ziegenbein </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Welcome!</p>
+<p>This document serves as a guided tutorial for our workshop on <strong>06.03.2025</strong> at Steno Diabetes Center Aarhus. It is designed to help you get started using the WRIC_preprocessing package, but you can use it afterwards to follow it on your own.</p>
+<p>Before we dive into the code-along session, please ensure you have the following installed:</p>
+<ul>
+<li><strong>R</strong>: The programming language we’ll be using for data analysis and visualization.</li>
+<li><strong>A Programming Environment (RStudio)</strong>: I will demonstrate using RStudio, but feel free to use a different IDE.</li>
+<li><strong>Quarto</strong>: To render this tutorial, if you choose to go through it by yourself.</li>
+</ul>
+<details>
+<summary>
+Click here for installation links and instructions
+</summary>
+<ul>
+<li><strong><a href="https://cran.r-project.org/mirrors.html">Install R</a></strong></li>
+<li><strong><a href="https://posit.co/download/rstudio-desktop/">Install RStudio</a></strong></li>
+<li><strong><a href="https://quarto.org/docs/get-started/">Install Quarto</a></strong></li>
+</ul>
+</details>
+<section id="faq-and-programming-terms" class="level1">
+<h1>FAQ and “Programming Terms”</h1>
+<section id="what-is-the-difference-between-r-and-rstudio" class="level3">
+<h3 class="anchored" data-anchor-id="what-is-the-difference-between-r-and-rstudio">What is the difference between R and RStudio?</h3>
+<p><strong>R</strong> is a programming language, while <strong>RStudio</strong> is a, so called, integrated development environment (IDE) designed specifically for R, offering a user-friendly interface for coding, plotting, and managing projects. You can think of R like a language, like english, where RStudio is Word - a program you can write english inside. But you could also use other programs for example libre office or latex.</p>
+</section>
+<section id="qmd-vs-r-vs-rmd" class="level3">
+<h3 class="anchored" data-anchor-id="qmd-vs-r-vs-rmd">qmd vs R vs Rmd</h3>
+<p>There are different types of files where you can write R code. A file ending in <strong>.R</strong> is a standard R script for writing and running R code, while in <strong>.qmd (Quarto Document)</strong> or <strong>.Rmd (R Markdown)</strong> you can combine code and text for dynamic reports, or for example this tutorial.</p>
+</section>
+</section>
+<section id="getting-started" class="level1">
+<h1>Getting Started</h1>
+<p>All functions are contained in the <code>R/WRIC_preprocessing.R</code> file. But to also have access to example data, doc_strings, tutorials and HowTo’s please download the entire repository for this workshop.</p>
+<ol type="1">
+<li>Download the entire repository from GitHub</li>
+</ol>
+<ul>
+<li>Go to the <a href="https://github.com/hulmanlab/WRIC_processing">repository on GitHub</a> and click the <strong>Code</strong> button.</li>
+<li>Click <strong>Download ZIP</strong> to download the entire repository, then extract it. If you have Git installed on your computer or GitHub Desktop, feel free to clone the repository instead of downloading it. <code>git clone https://github.com/hulmanlab/WRIC_processing.git</code></li>
+</ul>
+<ol start="2" type="1">
+<li>Set your working directory</li>
+</ol>
+<ul>
+<li>Set your working directory in R to the downloaded WRIC_processing directory. That means your path should end in <code>".../WRIC_processing"</code>. You can check the full path, by [add info for both mac and windows]</li>
+<li><strong>Via RStudio menu:</strong> Session -&gt; Set Working Directory -&gt; Choose Directory</li>
+<li><strong>Via Terminal:</strong></li>
+</ul>
+<pre><code>setwd("path/to/this/folder/WRIC_processing")
+getwd() # To check the current directory</code></pre>
+<details>
+<summary>
+Why do we change the working directory
+</summary>
+The working directory is where RStudio is looking for files. Meaning we can easily type source(‘R/WRIC_preprocessing.R’) instead of the entire file path. There is nothing wrong with specifiying the entire file path and not changing the working directory. But for this workshop it makes it a lot easier, when we can all use the same code and this ensure that all code runs on your computer without having to change anything.
+</details>
+<ol start="3" type="1">
+<li>Importing the functions from the “package”</li>
+</ol>
+<ul>
+<li><code>source()</code> runs an R script and loads its functions into your environment</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">'R/WRIC_preprocessing.R'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>RedCap API configuration file 'config.R' not found. Proceeding without.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+</div>
+</section>
+<section id="preprocess-wric-data" class="level1">
+<h1>Preprocess WRIC data</h1>
+<p>Now let’s preprocess the txt files, that is created by the WRIC. The function <code>preproces_WRIC_file()</code>disentangles the meta-data at the top of the file (ID, comment etc) and creates DataFrames and csv-files with the actual data, seperated between both rooms and summarized between the two measurements for each room.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">preprocess_WRIC_file</span>(<span class="st">"example_data/data.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>R1_metadata <span class="ot">&lt;-</span> result<span class="sc">$</span>R1_metadata</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>R2_metadata <span class="ot">&lt;-</span> result<span class="sc">$</span>R2_metadata</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>df_room1 <span class="ot">&lt;-</span> result<span class="sc">$</span>df_room1</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>df_room2 <span class="ot">&lt;-</span> result<span class="sc">$</span>df_room2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The function returns a list with “R1_metadata”, “R2_metadata”, “df_room1” and “df_room2”. Each item of the list is a DataFrame of either the metadata or the preprocessed actual data for either room 1 or 2. If ´save_csv` is True, then the DataFrames will be saved as csv files with “id_comment_WRIC_data.csv” or “id_comment_WRIC_metadata.csv”.</p>
+<p>Let’s look at the output really quick for room 1:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(R1_metadata)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(df_room1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>But the function can do a lot more and has a lot of extra parameters you can specify. The following is the exact same function call, but mentioning all optional parameters you can call with their default values. Default means, that if you do not specify this parameter, this is the value that the parameter has by default.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">preprocess_WRIC_file</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"./example_data/data.txt"</span>, </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">code=</span><span class="st">"id"</span>, </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">manual=</span><span class="cn">NULL</span>, </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">save_csv=</span><span class="cn">TRUE</span>, </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">path_to_save=</span><span class="cn">NULL</span>, </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">combine=</span><span class="cn">TRUE</span>, </span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">method=</span><span class="st">"mean"</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">start=</span><span class="cn">NULL</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">end=</span><span class="cn">NULL</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">notefilepath=</span> <span class="cn">NULL</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">keywords_dict=</span><span class="cn">NULL</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>Here are explanations and options to all parameters you can specify:</p>
+<ul>
+<li><strong>filepath:</strong> [String, filepath] Directory path to the WRIC .txt file.</li>
+<li><strong>code</strong> [String] Method for generating subject IDs. Default is “id”, also possible to specify “id+comment”, where both ID and comment values are combined or “manual”, where you can specify your own.</li>
+<li><strong>manual</strong> [String] Custom codes for subjects in Room 1 and Room 2 if <code>code</code> is “manual”.</li>
+<li><strong>save_csv</strong> [Logical], whether to save extracted metadata and data to CSV files or not. Default is True</li>
+<li><strong>path_to_save</strong> [String] Directory path for saving CSV files, NULL uses the current directory, NULL is Deafult.</li>
+<li><strong>combine</strong> [Logical], whether to combine S1 and S2 measurements. Default is True</li>
+<li><strong>method</strong> [String] Method for combining measurements (“mean”, “median”, “s1”, “s2”, “min”, “max”).</li>
+<li><strong>start</strong> [character or POSIXct or NULL], rows before this will be removed, if NULL takes first row e.g “2023-11-13 11:43:00”</li>
+<li><strong>end</strong> [character or POSIXct or NULL], rows after this will be removed, if NULL takes last rows e.g “2023-11-13 11:43:00”</li>
+<li><strong>notefilepath:</strong> If you specify a path to the corresponding notefile, the code will try to automatically extract the datetime and current protocol specification (sleeping, exercising, eating etc). If possible please read the <a href="https://github.com/hulmanlab/WRIC_processing/blob/main/HowToNoteFile.pdf">How To Note File</a>, before you start your study for consistent note taking. If there is a TimeStamp in the note e.g “Participants starts eating at 16:10”, the time of the creation of the note will be overwritten with the time specified in the free-text of the note. The “protocol” is extracted by keyword search. You can check currently included keywords and extend them by checking the keywords_dict in the extract_note_info() function of the WRIC_preprocessing.R file.</li>
+<li><strong>keywords_dict:</strong> [Nested List] A “dictionary” with keywords for extracting protocol information out of the notefile.</li>
+</ul>
+<section id="your-turn" class="level2">
+<h2 class="anchored" data-anchor-id="your-turn">Your Turn</h2>
+<p>So now it is your turn. Using the <code>preprocess_WRIC_file()</code> method create a csv file using “data.txt” in folder example_data.</p>
+<ol type="1">
+<li>create a csv with the name “XXXX_WRIC_data.csv” combining S1 and S2 measurements by taking the mean between them.</li>
+<li>create a csv, but cut-off the start to 10:45 on 13/11/2023 and the end to 11:58 on the same day. The csv should be saved as “testing_start_end_parameter_WRIC_data.csv”.</li>
+<li><em>Optional:</em> Try out the notefilepath parameter and see what happens.</li>
+</ol>
+</section>
+</section>
+<section id="automatic-note-file-extraction---adaptation-to-your-notes" class="level1">
+<h1>Automatic note file extraction - adaptation to your notes</h1>
+<p>One helpful feature of the <code>preprocess_WRIC_file()</code> method is to automatically extract the protocol from the note_file, that is filled in manually during the experiment. With “protocol” I mean coding wether the participant is currently sleeping, eating, exercising etc. This enables quick processing and easy access to extract and compare various e.g.&nbsp;eating periods. Let’s try it:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">preprocess_WRIC_file</span>(<span class="st">"./example_data/data.txt"</span>, <span class="at">notefilepath=</span><span class="st">"./example_data/note.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(result<span class="sc">$</span>df_room1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>When looking at <code>df_room1</code> now, we can see a new column called “protocol”. We can see the file starts with 0 and at 22:41:21 changes to 1.</p>
+<section id="your-turn-1" class="level2">
+<h2 class="anchored" data-anchor-id="your-turn-1">Your Turn</h2>
+<ol type="1">
+<li>Look into the <code>note.txt</code> file and find out why there is a change at 22:41:21 and what 0 and 1 might represent. Are there more numbers? What do they represent?</li>
+<li>When comparing with previous results, notice that the file now starts at a later time and stops at an earlier one. Why might that be? _OBS:_Since we keep reusing variable names (result, df_room1 etc) and use the same data.txt file to create csv_files, we overwrite those files and variables. That is completely fine for this tutorial, where we are focused on how to use it and not the results. But be careful in your own work!</li>
+</ol>
+</section>
+<section id="a-bit-more-information-about-extracting-data-from-the-notefile" class="level2">
+<h2 class="anchored" data-anchor-id="a-bit-more-information-about-extracting-data-from-the-notefile">A bit more information about extracting data from the notefile</h2>
+<p>When specifying a notefilepath, the function will</p>
+<ol type="1">
+<li><p>Check wether there is a time in the first row. If there is, this will be used to calculate the drift of the system. This drift will be added to all further datetimes you sepcify within the notefile.</p></li>
+<li><p>Check wether there is information about the partcipant entering or exiting the chamber. If yes, the data is cut to only include times in wich the participant is in the chamber.</p>
+<details>
+<summary>
+<p>What are the keywords for entering/exiting?</p>
+</summary>
+<p>start = c(“ind i kammer”, “enter”, “ind”, “entry”) This is only checked in the first three rows. Reasoning behind it, is that the first shows the time drift and then there might be two rows - one for each participant - detailing their entry into the chamber.</p>
+<p>end = c(“ud”, “exit”, “out”) This is only checked for the two last rows.</p>
+</details></li>
+<li><p>Read each row and compare if it contains a keyword that responds to one of the predefined keywords.</p></li>
+<li><p>Check wether there is a timestamp within the comment. If yes, the time drift is added (if available) and the time in the comment is used instead of the one made in the note file.</p></li>
+</ol>
+<ul>
+<li>write about drift and explain that subtracted from times in notes</li>
+<li>explain how notefile parameter works with example (e.g.&nbsp;necessary to create example data for that)</li>
+</ul>
+</section>
+<section id="your-turn-2" class="level2">
+<h2 class="anchored" data-anchor-id="your-turn-2"><span style="color:green">Your Turn</span></h2>
+<ol type="1">
+<li>Check <code>protocol.txt</code> to understand the protocol of <code>note_new.txt</code> notefile. Then use notefilepath and specify keywords_dict to automatically process the notefile. Use <code>data.txt</code> as the data file. #TODO: Create those files, make up a protocol</li>
+</ol>
+</section>
+</section>
+<section id="docstrings" class="level1">
+<h1>Docstrings</h1>
+<ul>
+<li>show docstring to see parameter documentation</li>
+</ul>
+</section>
+<section id="batch-processing" class="level1">
+<h1>Batch Processing</h1>
+<ul>
+<li>looping over folder with multiple files</li>
+<li>super quick excursion: RedCap API -&gt; verweis auf seperates tutorial</li>
+</ul>
+</section>
+<section id="working-with-a-subset-of-the-data-specific-time" class="level1">
+<h1>Working with a subset of the data (specific time)</h1>
+<ul>
+<li>example from already extracted data, import it again as dataframe</li>
+<li>extract certain time frame</li>
+<li>maybe some examplary biostats example? -&gt; ask chatgpt for something simple</li>
+</ul>
+</section>
+<section id="visualizing-wric-data" class="level1">
+<h1>Visualizing WRIC data</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span> <span class="sc">+</span> <span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
