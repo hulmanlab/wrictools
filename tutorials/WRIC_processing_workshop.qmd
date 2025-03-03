@@ -266,7 +266,7 @@ for (pair in filename_pairs) {
 Your folder structure might look different, so you might have to adjust this code. _(ChatGPT can be very helpful, or feel free to ask me, if your stuck.)_
 
 ## RedCap
-You can also use RedCap's API (Application Programming Interface) to use files directly from RedCap, and also upload the resulting files. To loop over record IDs and process all files within a project on RedCap, use the `preprocess_WRIC_files` function. To find out more about using RedCap, refer to this tutorial: #TODO: Add link to RedCap tutorial
+You can also use RedCap's API (Application Programming Interface) to use files directly from RedCap, and also upload the resulting files. To loop over record IDs and process all files within a project on RedCap, use the `preprocess_WRIC_files` function. To find out more about using RedCap, refer to this tutorial: [tutorials/RedCap_tutorial.qmd](https://github.com/hulmanlab/wrictools/blob/main/tutorials/RedCap_tutorial.qmd)
 
 _OBS:_ During processing, the data-file(s) will be downloaded and afterwards deleted again. If the data is not allowed to be on your personal device at any point, please use this package on a secure server, where you are allowed to (temporarily) store the data.
 

@@ -642,7 +642,7 @@ preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NUL
 #' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
 #' @param combine Logical, whether to combine S1 and S2 measurements.
 #' @param method Method for combining measurements ("mean", "median", "s1", "s2", "min", "max").
-#' #' @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row e.g "2023-11-13 11:43:00"
+#' @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row e.g "2023-11-13 11:43:00"
 #' @param end character or POSIXct or NULL, rows after this will be removed, if NULL takes last rows e.g "2023-11-13 11:43:00"
 #' @return A list where each key is a record ID and each value is a list with: (R1_metadata, R2_metadata, df_room1, df_room2).
   

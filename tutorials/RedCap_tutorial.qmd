@@ -1,0 +1,97 @@
+---
+title: "Using the RedCap API to Download and Upload Files"
+author: "Nina Ziegenbein"
+output: html
+---
+
+# Introduction
+
+In this tutorial, you will learn how to use the **RedCap API** to download and upload files from and to your RedCap project. The RedCap API allows you to interact with your project programmatically, enabling the automation of data transfers such as downloading and uploading files.
+
+### Overview of the Tasks
+
+1) Obtain an API Token from RedCap.
+2) Set up a configuration file to securely store the API token.
+3) Download files from RedCap based on record IDs and field names.
+4) Process multiple files from RedCap
+5) Upload files to RedCap for specific records and fields.
+
+## 1. Obtain Your API Token
+
+To interact with the RedCap API, you need an **API token**. This token is used to authenticate your requests. Follow the steps below to get your token:
+
+1) Go to your project in [RedCap](https://redcap.au.dk/).
+2) In the left-hand sidebar, look for the API option. If you don't see it, ask the project administrator to enable API access for your user.
+3) Once you have access to the API page, you will see an option to Request API Token. This may take a few hours to be approved.
+4) After the token is approved, you will find it on the same page.
+
+Save this token securely as it will be needed to authenticate your requests.
+
+## 2. Set Up the Configuration File
+
+Before you can interact with the RedCap API, you need to create a config.r file. This file will store your API token and the RedCap URL. Use the example config_example.r provided in the repository.
+
+Here is an example of how your config.r file should look:
+```{r}
+api_token       <- 'YOUR_API_TOKEN'  # Replace with your personal API token
+api_url         <- 'https://redcap.au.dk/api/'  # URL for AU RedCap projects
+```
+
+Important: Keep this file secure. If you are working with sensitive data, make sure not to share this file or commit it to a public repository. _If you use Git, make sure you add a `.gitignore` file and add `config.R` to it. You can take a look at the gitignore file in this repository for inspriation._
+
+## 3. Export Files from RedCap
+
+You can use the `export_file_from_redcap` function to download files from RedCap. The function requires three arguments:
+
+- record_id: The unique identifier for the record you want to download.
+- fieldname: The field name in RedCap where the file is stored.
+- path: The path where you want to save the downloaded file. This parameter is optional. If you do not specify a path it will create a folder /tmp (temporary) in your current directory.
+
+_Example:_
+Once your configuration file is set up, you can use the following code to download a file. Replace record_id and fieldname with your actual record ID and field name:
+
+```{r, eval=FALSE}
+export_file_from_redcap(record_id = "12345", fieldname = "WRIC_raw")
+```
+
+## 4. Process multiple files from RedCap
+Let's assume you have multiple records and files that need to be processed. You can use the preprocess_WRIC_files function to download and process files for multiple records. You need to specify the record IDs in your project, and the easiest is if you save them in a .csv file. The function has arguments very similair to function `preprocess_WRIC_file` (and the functionname is only different in the additional s in the end):
+
+- csv_file: The path to the CSV file containing the record IDs.
+- fieldname: The REDCap field where the WRIC data is stored.
+- code: Defines how subject IDs are generated (id, id+comment, or manual).
+- manual: Optional custom codes for subjects in Room 1 and Room 2 if code is "manual".
+- save_csv: Whether to save the processed metadata and data to CSV files (default: TRUE).
+- path_to_save: The directory where the CSV files should be saved (default is the current directory).
+- combine: Whether to combine measurements from S1 and S2 (default: TRUE).
+- method: The method used to combine measurements ("mean", "median", etc.).
+- start and end: Optional date-time range to filter the data (default: NULL, which uses the entire dataset).
+
+ The function returns a **list where each key is a record ID**, and the corresponding value is another list containing R1_metadata, R2_metadata, df_room1, df_room2.
+
+_Example:_
+Assuming you have a CSV file (record_ids.csv) with record IDs and a fieldname of "WRIC_raw", you can call the function like this:
+
+```{r, eval=FALSE}
+result <- preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", code = "id", save_csv = TRUE)
+R1_metadata <- result$R1_metadata
+R2_metadata <- result$R2_metadata
+df_room1 <- result$df_room1
+df_room2 <- result$df_room2
+```
+
+## 5. Upload Files to RedCap
+You can upload files to RedCap using the `upload_file_to_redcap` function. This function requires:
+
+- filepath: The path to the file you want to upload.
+- record_id: The record ID to which the file will be uploaded.
+- fieldname: The field name where the file will be uploaded.
+
+_Example:_
+To upload a file, use the following code, replacing filepath, record_id, and fieldname with your actual file path, record ID, and field name:
+
+```{r, eval=FALSE}
+upload_file_to_redcap(filepath = "./example_data/XXXX_WRIC_data.csv", record_id = "12345", fieldname = "WRIC_processed")
+```
+
+Remember to delete the tmp folder after uploading the files again.
