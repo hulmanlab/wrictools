@@ -1,5 +1,5 @@
 # source('config.R')
-source('R/WRIC_preprocessing.R')
+source('R/preprocessing.R')
 tryCatch({
   source("R/function_docs.R")
 }, error = function(e) {

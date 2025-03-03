@@ -4,7 +4,7 @@ This file explains how to import and use the WRIC_preprocessing function in Pyth
 
 If you instead want to use the functions in R, please click below.
 
-[![en](https://img.shields.io/badge/R-blue.svg)](https://github.com/NinaZiegenbein/WRIC_processing/blob/main/README.R.md)
+[![en](https://img.shields.io/badge/R-blue.svg)](https://github.com/NinaZiegenbein/WRIC_processing/blob/main/README.md)
 
 First we need to import the python files to be able to use the functions (see Quickstart).
 
@@ -42,7 +42,7 @@ Here are explanations and options to all parameters you can specify:
 - **start** [character or POSIXct or None], rows before this will be removed, if None takes first row e.g "2023-11-13 11:43:00"
 - **end** [character or POSIXct or None], rows after this will be removed, if None takes last rows e.g "2023-11-13 11:43:00"
 - **notefilepath:**
-If you specify a path to the corresponding notefile, the code will try to automatically extract the datetime and current protocol specification (sleeping, exercising, eating etc). If possible please read the [How To Note File](https://github.com/hulmanlab/WRIC_processing/blob/main/HowToNoteFile.pdf), before you start your study for consistent note taking. If there is a TimeStamp in the note e.g "Participants starts eating at 16:10", the time of the creation of the note will be overwritten with the time specified in the free-text of the note. The "protocol" is extracted by keyword search. You can check currently included keywords and extend them by checking the keywords_dict in the extract_note_info() function of the WRIC_preprocessing.R file. 
+If you specify a path to the corresponding notefile, the code will try to automatically extract the datetime and current protocol specification (sleeping, exercising, eating etc). If possible please read the [How To Note File](https://github.com/hulmanlab/WRIC_processing/blob/main/HowToNoteFile.pdf), before you start your study for consistent note taking. If there is a TimeStamp in the note e.g "Participants starts eating at 16:10", the time of the creation of the note will be overwritten with the time specified in the free-text of the note. The "protocol" is extracted by keyword search. You can check currently included keywords and extend them by checking the keywords_dict in the extract_note_info() function of the preprocessing.R file. 
 *#TODO: Add functionality to add keywords just for a single run (e.g. when package on CRAN has to be that way)*
 
 The function returns a list with "R1_metadata", "R2_metadata", "df_room1" and "df_room2". Each item of the list is a DataFrame of either the metadata or the preprocessed actual data for either room 1 or 2. If ´save_csv` is True, then the DataFrames will be saved as csv files with "id_visit_WRIC_data.csv" or "id_visit_WRIC_metadata.csv".
