@@ -1,0 +1,18 @@
+OmniCal software by ing.P.F.M.Schoffelen, Dept. of Human Biology, Maastricht University
+file identifier is C:\MI_Room_Calorimeter\Notes\example.txt	
+Date	Time	Comment
+
+11/14/23	06:13:27	06:15:29
+11/14/23	07:13:27	both enter chamber
+11/14/23	07:19:27	1 dancing the night away
+11/14/23	07:57:11	2 joins the dance party
+11/14/23	07:57:25	2 stops dancing
+11/14/23	08:01:36	1 stops the dance
+11/14/23	08:19:48	2 thinking deep thoughts
+11/14/23	08:32:50	1 researching diabetes
+11/14/23	09:43:24	2 stops thinking 9:41
+11/14/23	09:50:33	1 research done, diabetes cured
+11/14/23	10:22:03	1 dance dance revolution
+11/14/23	10:22:12	2 doing the cha-cha-slide
+11/14/23	10:44:05	stopping the dance party
+11/14/23	14:03:50	both exit the chamber

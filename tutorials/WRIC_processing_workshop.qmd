@@ -161,36 +161,169 @@ keywords_dict <- list(
       ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
     )
 ```
-
+If there are to lists e.g. for `sleeping`, at least one word of each list need to be present for it to be classified as sleeping. The value at the end of the list is the value used int he protocol column in the created dataframe.
 
 4) Check wether there is a timestamp within the comment. If yes, the time drift is added (if available) and the time in the comment is used instead of the one made in the note file.
 
-- write about drift and explain that subtracted from times in notes
-- explain how notefile parameter works with example (e.g. necessary to create example data for that)
+
 
 ## <span style="color:green">Your Turn</span>
 
-1) Check `protocol.txt` to understand the protocol of `note_new.txt` notefile. Then use notefilepath and specify keywords_dict to automatically process the notefile. Use `data.txt` as the data file.
-#TODO: Create those files, make up a protocol
+1) Look at the `note_new.txt` notefile. Then use notefilepath and specify keywords_dict to automatically process the notefile. Use `data.txt` as the data file. Which comment might be hard to catch with keywords and should be avoided using the `HowToNotefile.pdf`?
 
 # Docstrings
+Docstrings are text that explain what a function does, what parameter you can specify and what (if any) function returns. For packages in R that you have installed you can read the docstring by typing `?functionname`. Since this is not an official package (yet) this unfortunately does not work yet, but I have created a bit of a workaround. As long as you copy and paste the following piece of code to the top of your R script, you can use `doc("functionname")` to receive the same output
 - show docstring to see parameter documentation
 
+```{r}
+# This part tries to import the documentation of the functions
+tryCatch({
+  source("R/function_docs.R")
+}, error = function(e) {
+  cat("Documentation file 'function_docs.R' not found. Proceeding without documentation.\n")
+})
+
+# This part assigns the documentation imported above to each imported function
+if (exists("function_docs", envir = .GlobalEnv)) {
+  for (func_name in names(function_docs)) {
+    if (exists(func_name, envir = .GlobalEnv)) {
+      func <- get(func_name, envir = .GlobalEnv)
+      assign(func_name, structure(func, doc = function_docs[[func_name]]), envir = .GlobalEnv)    }
+  }
+}
+```
+
+Let's try it and look a bit closer at the output:
+```{r}
+doc("preprocess_WRIC_file")
+```
+The first sentance is a summary of what the function does. Next there is a list of parameters with the tag @param, followed by the name, the type of variable and a short description. Finally there is an @return statement, stating what the function returns.
+
+
 # Batch Processing
-- looping over folder with multiple files
-- super quick excursion: RedCap API -> verweis auf seperates tutorial
+Next lets look at processing multiple files together. You might have all of your wric_data files in one folder and want to process them at the same time. This is an example of just that. In the example_data folder is a folder named my_project with three wric-data files and each containing two participants. That means at the end we have generated 12 files, 6 data files and 6 metadata files.
+```{r}
+# Specify the folder with the wric_data
+data_folder <- "./example_data/my_project"
+
+# Find all files in the folder that start with "Results_"
+data_files <- list.files(data_folder, pattern = "^Results_", full.names = TRUE)
+
+# Iterate over all files, call the function and save the csv-files in the same folder
+for (data_file in data_files) {
+  preprocess_WRIC_file(data_file, path_to_save = data_folder, code = "id+comment")
+}
+```
+
+When you also want to process note files with it, the code becomes a little bit more complex, since you want to make sure that the correct files are processed together. You can do this based on the shared date in the filename, or a more labour intensive, but maybe easier option is to create a list of filename pairs. Below you can see both options:
+
+##### Option 1 - Pairs based on shared dates
+```{r, eval=FALSE}
+data_folder <- "./example_data/my_project"
+
+data_files <- list.files(data_folder, pattern = "^Results_.*_(\\d{12})\\.txt$", full.names = TRUE)
+note_files <- list.files(data_folder, pattern = "^note_(\\d{12})\\.txt$", full.names = TRUE)
+
+# Create a lookup table by extracting the 12-digit date from the filenames
+note_lookup <- setNames(note_files, sub("^(note_)(\\d{12})\\.txt$", "\\2", basename(note_files)))
+
+# Loop through the data files and match the date with the note_lookup
+for (data_file in data_files) {
+  date <- sub(".*_(\\d{12})\\.txt$", "\\1", basename(data_file))
+  print(date)
+  if (date %in% names(note_lookup)) {
+    preprocess_WRIC_file(data_file, notefilepath = note_lookup[date], path_to_save = data_folder, code = "id+comment")
+    message("Processed: ", data_file)
+  }
+}
+```
+
+##### Option 2 - Based on File-Pairs
+```{r, eval=FALSE}
+# Manually specify the pairs of data files and note files
+filename_pairs <- list(
+  list(
+    data_file = "./example_data/my_project/Results_1m_0101_202501130800.txt",
+    note_file = "./example_data/my_project/note_202501130800.txt"
+  ),
+  list(
+    data_file = "./example_data/my_project/Results_1m_0101_202501190800.txt",
+    note_file = "./example_data/my_project/note_202501190800.txt"
+  ),
+  list(
+    data_file = "./example_data/my_project/Results_1m_0101_202501250800.txt",
+    note_file = "./example_data/my_project/note_202501250800.txt"
+  )
+)
+
+# Loop through the filename pairs and process them
+for (pair in filename_pairs) {
+  preprocess_WRIC_file(pair$data_file, notefilepath = pair$note_file, path_to_save = "./example_data/my_project", code = "id+comment")
+  message("Processed: ", pair$data_file, " and ", pair$note_file)
+}
+```
+
+Your folder structure might look different, so you might have to adjust this code. _(ChatGPT can be very helpful, or feel free to ask me, if your stuck.)_
+
+## RedCap
+You can also use RedCap's API (Application Programming Interface) to use files directly from RedCap, and also upload the resulting files. To loop over record IDs and process all files within a project on RedCap, use the `preprocess_WRIC_files` function. To find out more about using RedCap, refer to this tutorial: #TODO: Add link to RedCap tutorial
+
+_OBS:_ During processing, the data-file(s) will be downloaded and afterwards deleted again. If the data is not allowed to be on your personal device at any point, please use this package on a secure server, where you are allowed to (temporarily) store the data.
 
 
+Should this be in general the end of this "basic" tutorial and be split up into multiple tutorials? -> NO I think makes sense to keep it as this for the workshop
 
 # Working with a subset of the data (specific time)
-- example from already extracted data, import it again as dataframe
-- extract certain time frame
-- maybe some examplary biostats example? -> ask chatgpt for something simple
+Often you are interested in a certain time period (e.g. after eating or during exercise) and want to perform some calculations based on those time frames. Let's look at how we would do that.
 
-# Visualizing WRIC data
+1) Import the preprocessed data (the csv-file) _You can skip this step, if you already have the data.frame, for example right after calling_ `preprocess_WRIC_files`.
+```{r}
+data <- read.csv("./example_data/my_project/AB56_Visit 1_WRIC_data.csv") # If you followed the tutorial so far, you should have created this csv file in this location (otherwise go back to Batch Processing and execute the first code chunk or choose a different path
+View(data)
+```
 
+2) Let's extract the data that we are interested in. Let's start with the first time our participant is eating (breakfast) including one hour afterwards.
+```{r}
+breakfast_index <- which(data$protocol == 2)[1] # we take the first (1) instance where the protocol is 2 (eating)
+data_breakfast <- data[breakfast_index:(breakfast_index + 59),] # we create a new data.frame where we take the next 60 rows, including the start_index
+View(data_breakfast) #Let's look at the data to check wether it worked correctly
+```
+
+Maybe we want to compare RER after breakfast with RER after dinner. So let's extract the dinner time. As participants are eating for some time (e.g 15min) there are 15 rows where protocol is 2. So it would not work to just take the second instance, but we need to identify transitions from another number to 2 and then choose the second transition _(if this is something that is difficult and happens often, this could be a feature for the future?)_
 
 ```{r}
-2 + 2
+dinner_index <- which(data$protocol == 2 & lag(data$protocol) != 2)[2] # we additionally check wether the row right before (lag) is not 2 and then take the second instance (2) to get the dinner time
+data_dinner <- data[dinner_index:(dinner_index + 59),]
+View(data_dinner) #Let's look at the data to check wether it worked correctly
 ```
- 
+
+3) Now we can compare the two dataframes. For this example let's use a paired t-test to check wether there are differences in RER between breakfast and dinner. _Please note, this is randomly generated synthetic data and does not represent realistic data. So you can not pull any insights out of this. It's purely to demonstrate how you would use this._
+
+```{r}
+t.test(data_breakfast$RER, data_dinner$RER, paired = TRUE)
+```
+
+Perfect, that was easy enough. Some more helpful functions, you might want to use for/on your sub-dataframes:
+
+- `add_relative_time(dataframe)` - Renumbers _relative_time_ column starting from 0. Might be more intuitiv for further use. Example: `data_dinner <- add_relative_time(data_dinner)`
+- `cut_rows`- With this function you can easily create a subdataframe (like we did above) based on datetime values (instead of the protocol value). Example: `data_dinner <- cut_rows(data, start="2023-11-14 20:04:00", end="2023-11-14 21:04:00")`
+- 
+
+Of course you can do these analyes batch-wise as well, the same way as above. Here an example:
+```{r, eval=FALSE}
+files <- list.files(folder_path, pattern = "_data\\.csv$", full.names = TRUE)
+for (file in files) {
+    data <- read.csv(file)
+    breakfast_index <- which(data$protocol == 2)[1]
+    data_breakfast <- data[breakfast_index:(breakfast_index + 59),] 
+    dinner_index <- which(data$protocol == 2 & lag(data$protocol) != 2)[2] 
+    data_dinner <- data[dinner_index:(dinner_index + 59),]
+    message("T-Test Result for : ", file)
+    t.test(data_breakfast$RER, data_dinner$RER, paired = TRUE)
+}
+```
+
+That concludes this tutorial. Now you know all basic functionalities of the package and are ready to use it in your own projects and with real data. Have fun!
+
+# Visualizing WRIC data
+Link to seperate tutorial

@@ -256,7 +256,7 @@ time  (4): X2, X19, X36, X53
 <li><strong>keywords_dict:</strong> [Nested List] A “dictionary” with keywords for extracting protocol information out of the notefile.</li>
 </ul>
 <section id="your-turn" class="level2">
-<h2 class="anchored" data-anchor-id="your-turn">Your Turn</h2>
+<h2 class="anchored" data-anchor-id="your-turn"><span style="color:green">Your Turn</span></h2>
 <p>So now it is your turn. Using the <code>preprocess_WRIC_file()</code> method create a csv file using “data.txt” in folder example_data.</p>
 <ol type="1">
 <li>create a csv with the name “XXXX_WRIC_data.csv” combining S1 and S2 measurements by taking the mean between them.</li>
@@ -292,7 +292,7 @@ time  (4): X2, X19, X36, X53
 </div>
 <p>When looking at <code>df_room1</code> now, we can see a new column called “protocol”. We can see the file starts with 0 and at 22:41:21 changes to 1.</p>
 <section id="your-turn-1" class="level2">
-<h2 class="anchored" data-anchor-id="your-turn-1">Your Turn</h2>
+<h2 class="anchored" data-anchor-id="your-turn-1"><span style="color:green">Your Turn</span></h2>
 <ol type="1">
 <li>Look into the <code>note.txt</code> file and find out why there is a change at 22:41:21 and what 0 and 1 might represent. Are there more numbers? What do they represent?</li>
 <li>When comparing with previous results, notice that the file now starts at a later time and stops at an earlier one. Why might that be? _OBS:_Since we keep reusing variable names (result, df_room1 etc) and use the same data.txt file to create csv_files, we overwrite those files and variables. That is completely fine for this tutorial, where we are focused on how to use it and not the results. But be careful in your own work!</li>
@@ -311,50 +311,369 @@ time  (4): X2, X19, X36, X53
 <p>start = c(“ind i kammer”, “enter”, “ind”, “entry”) This is only checked in the first three rows. Reasoning behind it, is that the first shows the time drift and then there might be two rows - one for each participant - detailing their entry into the chamber.</p>
 <p>end = c(“ud”, “exit”, “out”) This is only checked for the two last rows.</p>
 </details></li>
-<li><p>Read each row and compare if it contains a keyword that responds to one of the predefined keywords.</p></li>
-<li><p>Check wether there is a timestamp within the comment. If yes, the time drift is added (if available) and the time in the comment is used instead of the one made in the note file.</p></li>
+<li><p>Read each row and compare if it contains a keyword that responds to one of the predefined keywords. If yes change the label for that time and all following times until the next match. If you do not specify the <code>keywords_dict</code> parameter it will use a default dictionary of keywords and protocol values:</p></li>
 </ol>
-<ul>
-<li>write about drift and explain that subtracted from times in notes</li>
-<li>explain how notefile parameter works with example (e.g.&nbsp;necessary to create example data for that)</li>
-</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>keywords_dict <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>      <span class="at">sleeping =</span> <span class="fu">list</span>(<span class="at">keywords =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"seng"</span>, <span class="st">"sleeping"</span>, <span class="st">"bed"</span>, <span class="st">"sove"</span>, <span class="st">"soeve"</span>, <span class="st">"godnat"</span>, <span class="st">"night"</span>, <span class="st">"sleep"</span>)), <span class="at">value =</span> <span class="dv">1</span>), </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">eating =</span> <span class="fu">list</span>(<span class="at">keywords =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"start"</span>, <span class="st">"begin"</span>, <span class="st">"began"</span>), <span class="fu">c</span>(<span class="st">"maaltid"</span>, <span class="st">"måltid"</span>, <span class="st">"eat"</span>, <span class="st">"meal"</span>, <span class="st">"food"</span>, <span class="st">"spis"</span>, <span class="st">"maal"</span>, <span class="st">"måd"</span>, <span class="st">"mad"</span>, <span class="st">"frokost"</span>, <span class="st">"morgenmad"</span>, <span class="st">"middag"</span>, <span class="st">"snack"</span>, <span class="st">"aftensmad"</span>)), <span class="at">value =</span> <span class="dv">2</span>), </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">stop_sleeping =</span> <span class="fu">list</span>(<span class="at">keywords =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"vaagen"</span>, <span class="st">"vågen"</span>, <span class="st">"vaekke"</span>, <span class="st">"væk"</span>, <span class="st">"wake"</span>, <span class="st">"woken"</span>, <span class="st">"vaagnet"</span>)), <span class="at">value =</span> <span class="dv">0</span>), </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">stop_anything =</span> <span class="fu">list</span>(<span class="at">keywords =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"faerdig"</span>, <span class="st">"færdig"</span>, <span class="st">"stop"</span>, <span class="st">"end "</span>, <span class="st">"finished"</span>, <span class="st">"slut"</span>)), <span class="at">value =</span> <span class="dv">0</span>), </span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">activity =</span> <span class="fu">list</span>(<span class="at">keywords =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"start"</span>, <span class="st">"begin"</span>, <span class="st">"began"</span>), <span class="fu">c</span>(<span class="st">"step"</span>, <span class="st">"exercise"</span>, <span class="st">"physical activity"</span>, <span class="st">"active"</span>, <span class="st">"motion"</span>, <span class="st">"aktiv"</span>)), <span class="at">value =</span> <span class="dv">3</span>), </span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">ree_start =</span> <span class="fu">list</span>(<span class="at">keywords =</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">"start"</span>, <span class="st">"begin"</span>, <span class="st">"began"</span>), <span class="fu">c</span>(<span class="st">"REE"</span>, <span class="st">"BEE"</span>, <span class="st">"BMR"</span>, <span class="st">"RMR"</span>, <span class="st">"RER"</span>)), <span class="at">value =</span> <span class="dv">4</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If there are to lists e.g.&nbsp;for <code>sleeping</code>, at least one word of each list need to be present for it to be classified as sleeping. The value at the end of the list is the value used int he protocol column in the created dataframe.</p>
+<ol start="4" type="1">
+<li>Check wether there is a timestamp within the comment. If yes, the time drift is added (if available) and the time in the comment is used instead of the one made in the note file.</li>
+</ol>
 </section>
 <section id="your-turn-2" class="level2">
 <h2 class="anchored" data-anchor-id="your-turn-2"><span style="color:green">Your Turn</span></h2>
 <ol type="1">
-<li>Check <code>protocol.txt</code> to understand the protocol of <code>note_new.txt</code> notefile. Then use notefilepath and specify keywords_dict to automatically process the notefile. Use <code>data.txt</code> as the data file. #TODO: Create those files, make up a protocol</li>
+<li>Look at the <code>note_new.txt</code> notefile. Then use notefilepath and specify keywords_dict to automatically process the notefile. Use <code>data.txt</code> as the data file. Which comment might be hard to catch with keywords and should be avoided using the <code>HowToNotefile.pdf</code>?</li>
 </ol>
 </section>
 </section>
 <section id="docstrings" class="level1">
 <h1>Docstrings</h1>
-<ul>
-<li>show docstring to see parameter documentation</li>
-</ul>
+<p>Docstrings are text that explain what a function does, what parameter you can specify and what (if any) function returns. For packages in R that you have installed you can read the docstring by typing <code>?functionname</code>. Since this is not an official package (yet) this unfortunately does not work yet, but I have created a bit of a workaround. As long as you copy and paste the following piece of code to the top of your R script, you can use <code>doc("functionname")</code> to receive the same output - show docstring to see parameter documentation</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This part tries to import the documentation of the functions</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tryCatch</span>({</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">source</span>(<span class="st">"R/function_docs.R"</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Documentation file 'function_docs.R' not found. Proceeding without documentation.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co"># This part assigns the documentation imported above to each imported function</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">"function_docs"</span>, <span class="at">envir =</span> .GlobalEnv)) {</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (func_name <span class="cf">in</span> <span class="fu">names</span>(function_docs)) {</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">exists</span>(func_name, <span class="at">envir =</span> .GlobalEnv)) {</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>      func <span class="ot">&lt;-</span> <span class="fu">get</span>(func_name, <span class="at">envir =</span> .GlobalEnv)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">assign</span>(func_name, <span class="fu">structure</span>(func, <span class="at">doc =</span> function_docs[[func_name]]), <span class="at">envir =</span> .GlobalEnv)    }</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s try it and look a bit closer at the output:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">doc</span>(<span class="st">"preprocess_WRIC_file"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
+
+
+  @param filepath Path to the WRIC .txt file.
+
+  @param code Method for generating subject IDs ("id", "id+comment", or "manual").
+
+  @param manual Custom codes for subjects in Room 1 and Room 2 if `code` is "manual".
+
+  @param save_csv Logical, whether to save extracted metadata and data to CSV files.
+
+  @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
+
+  @param combine Logical, whether to combine S1 and S2 measurements.
+
+  @param method Method for combining measurements ("mean", "median", "s1", "s2", "min", "max").
+
+  @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row e.g "2023-11-13 11:43:00"
+
+  @param end character or POSIXct or NULL, rows after this will be removed, if NULL takes last rows e.g "2023-11-13 11:43:00"
+
+  @param notefilepath String, Directory path of the corresponding note file (.txt)
+
+  @param keywords_dict Nested List, used to extract protocol values from note file
+
+  @return A list containing the metadata and DataFrames for Room 1 and Room 2. </code></pre>
+</div>
+</div>
+<p>The first sentance is a summary of what the function does. Next there is a list of parameters with the tag <span class="citation" data-cites="param">@param</span>, followed by the name, the type of variable and a short description. Finally there is an <span class="citation" data-cites="return">@return</span> statement, stating what the function returns.</p>
 </section>
 <section id="batch-processing" class="level1">
 <h1>Batch Processing</h1>
-<ul>
-<li>looping over folder with multiple files</li>
-<li>super quick excursion: RedCap API -&gt; verweis auf seperates tutorial</li>
-</ul>
+<p>Next lets look at processing multiple files together. You might have all of your wric_data files in one folder and want to process them at the same time. This is an example of just that. In the example_data folder is a folder named my_project with three wric-data files and each containing two participants. That means at the end we have generated 12 files, 6 data files and 6 metadata files.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Specify the folder with the wric_data</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>data_folder <span class="ot">&lt;-</span> <span class="st">"./example_data/my_project"</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Find all files in the folder that start with "Results_"</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>data_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(data_folder, <span class="at">pattern =</span> <span class="st">"^Results_"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterate over all files, call the function and save the csv-files in the same folder</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (data_file <span class="cf">in</span> data_files) {</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">preprocess_WRIC_file</span>(data_file, <span class="at">path_to_save =</span> data_folder, <span class="at">code =</span> <span class="st">"id+comment"</span>)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>When you also want to process note files with it, the code becomes a little bit more complex, since you want to make sure that the correct files are processed together. You can do this based on the shared date in the filename, or a more labour intensive, but maybe easier option is to create a list of filename pairs. Below you can see both options:</p>
+<section id="option-1---pairs-based-on-shared-dates" class="level5">
+<h5 class="anchored" data-anchor-id="option-1---pairs-based-on-shared-dates">Option 1 - Pairs based on shared dates</h5>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>data_folder <span class="ot">&lt;-</span> <span class="st">"./example_data/my_project"</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>data_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(data_folder, <span class="at">pattern =</span> <span class="st">"^Results_.*_(</span><span class="sc">\\</span><span class="st">d{12})</span><span class="sc">\\</span><span class="st">.txt$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>note_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(data_folder, <span class="at">pattern =</span> <span class="st">"^note_(</span><span class="sc">\\</span><span class="st">d{12})</span><span class="sc">\\</span><span class="st">.txt$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a lookup table by extracting the 12-digit date from the filenames</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>note_lookup <span class="ot">&lt;-</span> <span class="fu">setNames</span>(note_files, <span class="fu">sub</span>(<span class="st">"^(note_)(</span><span class="sc">\\</span><span class="st">d{12})</span><span class="sc">\\</span><span class="st">.txt$"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">2"</span>, <span class="fu">basename</span>(note_files)))</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop through the data files and match the date with the note_lookup</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (data_file <span class="cf">in</span> data_files) {</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  date <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">".*_(</span><span class="sc">\\</span><span class="st">d{12})</span><span class="sc">\\</span><span class="st">.txt$"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, <span class="fu">basename</span>(data_file))</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(date)</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (date <span class="sc">%in%</span> <span class="fu">names</span>(note_lookup)) {</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">preprocess_WRIC_file</span>(data_file, <span class="at">notefilepath =</span> note_lookup[date], <span class="at">path_to_save =</span> data_folder, <span class="at">code =</span> <span class="st">"id+comment"</span>)</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Processed: "</span>, data_file)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "202501130800"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35
+Processed: ./example_data/my_project/Results_1m_0101_202501130800.txt</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "202501190800"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35
+Processed: ./example_data/my_project/Results_1m_0101_202501190800.txt</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "202501250800"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35
+Processed: ./example_data/my_project/Results_1m_0101_202501250800.txt</code></pre>
+</div>
+</div>
+</section>
+<section id="option-2---based-on-file-pairs" class="level5">
+<h5 class="anchored" data-anchor-id="option-2---based-on-file-pairs">Option 2 - Based on File-Pairs</h5>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Manually specify the pairs of data files and note files</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>filename_pairs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_file =</span> <span class="st">"./example_data/my_project/Results_1m_0101_202501130800.txt"</span>,</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">note_file =</span> <span class="st">"./example_data/my_project/note_202501130800.txt"</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_file =</span> <span class="st">"./example_data/my_project/Results_1m_0101_202501190800.txt"</span>,</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">note_file =</span> <span class="st">"./example_data/my_project/note_202501190800.txt"</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_file =</span> <span class="st">"./example_data/my_project/Results_1m_0101_202501250800.txt"</span>,</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">note_file =</span> <span class="st">"./example_data/my_project/note_202501250800.txt"</span></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop through the filename pairs and process them</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (pair <span class="cf">in</span> filename_pairs) {</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">preprocess_WRIC_file</span>(pair<span class="sc">$</span>data_file, <span class="at">notefilepath =</span> pair<span class="sc">$</span>note_file, <span class="at">path_to_save =</span> <span class="st">"./example_data/my_project"</span>, <span class="at">code =</span> <span class="st">"id+comment"</span>)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Processed: "</span>, pair<span class="sc">$</span>data_file, <span class="st">" and "</span>, pair<span class="sc">$</span>note_file)</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2601 Columns: 67
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35
+Processed: ./example_data/my_project/Results_1m_0101_202501130800.txt and ./example_data/my_project/note_202501130800.txt
+Rows: 2601 Columns: 67── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35
+Processed: ./example_data/my_project/Results_1m_0101_202501190800.txt and ./example_data/my_project/note_202501190800.txt
+Rows: 2601 Columns: 67── Column specification ────────────────────────────────────────────────────────
+Delimiter: "\t"
+chr   (4): X1, X18, X35, X52
+dbl  (56): X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X2...
+lgl   (3): X17, X34, X51
+time  (4): X2, X19, X36, X53
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Starting time for room 1 is 2023-11-13 21:14:22 and end 2023-11-15 06:35:48 and for room 2 start is 2023-11-13 21:14:22 and end 2023-11-15 06:44:36"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Drift: 1.35
+Processed: ./example_data/my_project/Results_1m_0101_202501250800.txt and ./example_data/my_project/note_202501250800.txt</code></pre>
+</div>
+</div>
+<p>Your folder structure might look different, so you might have to adjust this code. <em>(ChatGPT can be very helpful, or feel free to ask me, if your stuck.)</em></p>
+</section>
+<section id="redcap" class="level2">
+<h2 class="anchored" data-anchor-id="redcap">RedCap</h2>
+<p>You can also use RedCap’s API (Application Programming Interface) to use files directly from RedCap, and also upload the resulting files. To loop over record IDs and process all files within a project on RedCap, use the <code>preprocess_WRIC_files</code> function. To find out more about using RedCap, refer to this tutorial: #TODO: Add link to RedCap tutorial</p>
+<p><em>OBS:</em> During processing, the data-file(s) will be downloaded and afterwards deleted again. If the data is not allowed to be on your personal device at any point, please use this package on a secure server, where you are allowed to (temporarily) store the data.</p>
+<p>Should this be in general the end of this “basic” tutorial and be split up into multiple tutorials? -&gt; NO I think makes sense to keep it as this for the workshop</p>
+</section>
 </section>
 <section id="working-with-a-subset-of-the-data-specific-time" class="level1">
 <h1>Working with a subset of the data (specific time)</h1>
+<p>Often you are interested in a certain time period (e.g.&nbsp;after eating or during exercise) and want to perform some calculations based on those time frames. Let’s look at how we would do that.</p>
+<ol type="1">
+<li>Import the preprocessed data (the csv-file) <em>You can skip this step, if you already have the data.frame, for example right after calling</em> <code>preprocess_WRIC_files</code>.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"./example_data/my_project/AB56_Visit 1_WRIC_data.csv"</span>) <span class="co"># If you followed the tutorial so far, you should have created this csv file in this location (otherwise go back to Batch Processing and execute the first code chunk or choose a different path</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ol start="2" type="1">
+<li>Let’s extract the data that we are interested in. Let’s start with the first time our participant is eating (breakfast) including one hour afterwards.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>breakfast_index <span class="ot">&lt;-</span> <span class="fu">which</span>(data<span class="sc">$</span>protocol <span class="sc">==</span> <span class="dv">2</span>)[<span class="dv">1</span>] <span class="co"># we take the first (1) instance where the protocol is 2 (eating)</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>data_breakfast <span class="ot">&lt;-</span> data[breakfast_index<span class="sc">:</span>(breakfast_index <span class="sc">+</span> <span class="dv">59</span>),] <span class="co"># we create a new data.frame where we take the next 60 rows, including the start_index</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(data_breakfast) <span class="co">#Let's look at the data to check wether it worked correctly</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Maybe we want to compare RER after breakfast with RER after dinner. So let’s extract the dinner time. As participants are eating for some time (e.g 15min) there are 15 rows where protocol is 2. So it would not work to just take the second instance, but we need to identify transitions from another number to 2 and then choose the second transition <em>(if this is something that is difficult and happens often, this could be a feature for the future?)</em></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>dinner_index <span class="ot">&lt;-</span> <span class="fu">which</span>(data<span class="sc">$</span>protocol <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;</span> <span class="fu">lag</span>(data<span class="sc">$</span>protocol) <span class="sc">!=</span> <span class="dv">2</span>)[<span class="dv">2</span>] <span class="co"># we additionally check wether the row right before (lag) is not 2 and then take the second instance (2) to get the dinner time</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>data_dinner <span class="ot">&lt;-</span> data[dinner_index<span class="sc">:</span>(dinner_index <span class="sc">+</span> <span class="dv">59</span>),]</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(data_dinner) <span class="co">#Let's look at the data to check wether it worked correctly</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ol start="3" type="1">
+<li>Now we can compare the two dataframes. For this example let’s use a paired t-test to check wether there are differences in RER between breakfast and dinner. <em>Please note, this is randomly generated synthetic data and does not represent realistic data. So you can not pull any insights out of this. It’s purely to demonstrate how you would use this.</em></li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(data_breakfast<span class="sc">$</span>RER, data_dinner<span class="sc">$</span>RER, <span class="at">paired =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Paired t-test
+
+data:  data_breakfast$RER and data_dinner$RER
+t = 4.1184, df = 59, p-value = 0.0001205
+alternative hypothesis: true mean difference is not equal to 0
+95 percent confidence interval:
+ 0.01718292 0.04965941
+sample estimates:
+mean difference 
+     0.03342117 </code></pre>
+</div>
+</div>
+<p>Perfect, that was easy enough. Some more helpful functions, you might want to use for/on your sub-dataframes:</p>
 <ul>
-<li>example from already extracted data, import it again as dataframe</li>
-<li>extract certain time frame</li>
-<li>maybe some examplary biostats example? -&gt; ask chatgpt for something simple</li>
+<li><code>add_relative_time(dataframe)</code> - Renumbers <em>relative_time</em> column starting from 0. Might be more intuitiv for further use. Example: <code>data_dinner &lt;- add_relative_time(data_dinner)</code></li>
+<li><code>cut_rows</code>- With this function you can easily create a subdataframe (like we did above) based on datetime values (instead of the protocol value). Example: <code>data_dinner &lt;- cut_rows(data, start="2023-11-14 20:04:00", end="2023-11-14 21:04:00")</code></li>
+<li></li>
 </ul>
+<p>Of course you can do these analyes batch-wise as well, the same way as above. Here an example:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(folder_path, <span class="at">pattern =</span> <span class="st">"_data</span><span class="sc">\\</span><span class="st">.csv$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (file <span class="cf">in</span> files) {</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(file)</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    breakfast_index <span class="ot">&lt;-</span> <span class="fu">which</span>(data<span class="sc">$</span>protocol <span class="sc">==</span> <span class="dv">2</span>)[<span class="dv">1</span>]</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    data_breakfast <span class="ot">&lt;-</span> data[breakfast_index<span class="sc">:</span>(breakfast_index <span class="sc">+</span> <span class="dv">59</span>),] </span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    dinner_index <span class="ot">&lt;-</span> <span class="fu">which</span>(data<span class="sc">$</span>protocol <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;</span> <span class="fu">lag</span>(data<span class="sc">$</span>protocol) <span class="sc">!=</span> <span class="dv">2</span>)[<span class="dv">2</span>] </span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>    data_dinner <span class="ot">&lt;-</span> data[dinner_index<span class="sc">:</span>(dinner_index <span class="sc">+</span> <span class="dv">59</span>),]</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"T-Test Result for : "</span>, file)</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">t.test</span>(data_breakfast<span class="sc">$</span>RER, data_dinner<span class="sc">$</span>RER, <span class="at">paired =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 <section id="visualizing-wric-data" class="level1">
 <h1>Visualizing WRIC data</h1>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span> <span class="sc">+</span> <span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 4</code></pre>
-</div>
-</div>
+<p>Link to seperate tutorial</p>
 </section>
 
 </main>

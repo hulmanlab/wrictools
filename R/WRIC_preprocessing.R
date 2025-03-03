@@ -104,7 +104,7 @@ add_relative_time <- function(df, start_time=NULL) {
     start_time <- df$datetime[1]
   }
   start_time <- as.POSIXct(start_time)
-  df$`relative_time[min]` <- as.numeric(difftime(df$datetime, start_time, units = "mins"))
+  df$`relative_time` <- as.numeric(difftime(df$datetime, start_time, units = "mins"))
   return(df)
 }
 

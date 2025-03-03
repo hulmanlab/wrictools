@@ -66,7 +66,7 @@ test_that("preprocess_WRIC_file does not throw errors with various inputs", {
   expect_error({
     result <- preprocess_WRIC_file("./example_data/data.txt", 
                                    code = "manual", 
-                                   manual = list(Room1 = c("R1_code1", "R1_code2"), Room2 = c("R2_code1", "R2_code2")))
+                                   manual = list("R1_code1", "R1_code2"))
   }, NA)
 
   # Test with filepath, save_csv and path_to_save

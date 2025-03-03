@@ -20,11 +20,11 @@ doc("extract_meta_data")
 doc("preprocess_WRIC_file")
 
 # no_comment_file = "/Users/au698484/Documents/data_wric_no_comment.txt"
-# result <- preprocess_WRIC_file("./example_data/data.txt", code="id+comment", notefilepath="./example_data/note.txt")#, start="2023-11-13 11:43:00", end="2023-11-13 12:09:00") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
-# R1_metadata <- result$R1_metadata
-# R2_metadata <- result$R2_metadata
-# df_room1 <- result$df_room1
-# df_room2 <- result$df_room2
+result <- preprocess_WRIC_file("./example_data/data.txt", path_to_save = "./example_data/new_directory", notefilepath="./example_data/note.txt")#, start="2023-11-13 11:43:00", end="2023-11-13 12:09:00") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
+R1_metadata <- result$R1_metadata
+R2_metadata <- result$R2_metadata
+df_room1 <- result$df_room1
+df_room2 <- result$df_room2
 
 # str(df_room1)
 
