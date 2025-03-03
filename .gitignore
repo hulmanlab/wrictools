@@ -173,3 +173,7 @@ cacert.pem
 
 tmp/
 R_tutorial_files/
+
+.DS_Store
+.RData
+.Rhistory
