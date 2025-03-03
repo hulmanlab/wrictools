@@ -73,7 +73,8 @@ _Example:_
 Assuming you have a CSV file (record_ids.csv) with record IDs and a fieldname of "WRIC_raw", you can call the function like this:
 
 ```{r, eval=FALSE}
-result <- preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", code = "id", save_csv = TRUE)
+result <- preprocess_WRIC_files("./example_data/record_ids.csv", "WRIC_raw", 
+                            code = "id", save_csv = TRUE)
 R1_metadata <- result$R1_metadata
 R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1
@@ -91,7 +92,8 @@ _Example:_
 To upload a file, use the following code, replacing filepath, record_id, and fieldname with your actual file path, record ID, and field name:
 
 ```{r, eval=FALSE}
-upload_file_to_redcap(filepath = "./example_data/XXXX_WRIC_data.csv", record_id = "12345", fieldname = "WRIC_processed")
+upload_file_to_redcap(filepath = "./example_data/XXXX_WRIC_data.csv", 
+                    record_id = "12345", fieldname = "WRIC_processed")
 ```
 
 Remember to delete the tmp folder after uploading the files again.

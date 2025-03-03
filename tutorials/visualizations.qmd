@@ -1,0 +1,6 @@
+---
+title: "Visualizing your WRIC data for easy inspection"
+author: "Nina Ziegenbein"
+output: html
+---
+

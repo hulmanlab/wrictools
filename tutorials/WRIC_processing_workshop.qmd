@@ -20,7 +20,7 @@ Before we dive into the code-along session, please ensure you have the following
 - **Quarto**: To render this tutorial, if you choose to go through it by yourself.
 
 <details>
-<summary>Click here for installation links and instructions</summary>
+<summary>**Click here for installation links and instructions**</summary>
 - **[Install R](https://cran.r-project.org/mirrors.html)**
 - **[Install RStudio](https://posit.co/download/rstudio-desktop/)**
 - **[Install Quarto](https://quarto.org/docs/get-started/)**
@@ -37,13 +37,43 @@ There are different types of files where you can write R code. A file ending in 
 # Getting Started
 All functions are contained in the `R/preprocessing.R` file. But to also have access to example data, doc_strings, tutorials and HowTo's please download the entire repository for this workshop.
 
-1. Download the entire repository from GitHub
-- Go to the [repository on GitHub](https://github.com/hulmanlab/WRIC_processing) and click the **Code** button.
-- Click **Download ZIP** to download the entire repository, then extract it.
-If you have Git installed on your computer or GitHub Desktop, feel free to clone the repository instead of downloading it. 
-`git clone https://github.com/hulmanlab/WRIC_processing.git`
+## Download the repository from GitHub
+1. Clone the Repository using Git (Recommended)
 
-2. Set your working directory
+Using Git is the standard and most efficient way to work with this repository, as it allows you to easily pull updates and manage changes in the future. If you don’t have Git installed, you can download it from here.
+
+To clone the repository:
+
+- Install Git: If you haven't already, install Git on your computer.
+- Clone the Repository: Open your terminal (or Git Bash on Windows), and run the following command to clone the repository to your local machine:
+```{bash, eval=FALSE}
+git clone https://github.com/hulmanlab/wrictools.git
+```
+This will create a copy of the repository on your local machine, and you can start working with it immediately.
+
+2. Download the Repository as a ZIP (Alternative)
+
+If you prefer not to use Git, you can download the repository as a ZIP file:
+
+- Go to the [repository on GitHub](https://github.com/hulmanlab/wrictools).
+- Click the Code button, then click Download ZIP.
+- Extract the ZIP file to your desired location on your machine.
+
+<details>
+<summary>**Pulling Updates in the Future (Using Git)**</summary>
+  Once you’ve cloned the repository, you can easily stay up to date with the latest features and changes by pulling new updates from the repository.
+
+  To get the latest changes from the repository navigate to your local repository. In your terminal, navigate to the directory where you cloned the repository and then pull Updates to get the latest updates (new features, bug fixes, etc.):
+  ```{bash, eval=FALSE}
+  cd Docuents/wrictools #add your own path here
+  git pull origin main
+  ```
+
+  This will download and merge any changes from the GitHub repository to your local copy. By using Git, you can always keep your version up-to-date with the latest improvements without needing to manually download or re-extract the repository.
+</details>
+
+
+## Set your working directory
 - Set your working directory in R to the downloaded WRIC_processing directory. That means your path should end in `".../WRIC_processing"`. You can check the full path, by [add info for both mac and windows]
 - **Via RStudio menu:** Session -> Set Working Directory -> Choose Directory
 - **Via Terminal:**
@@ -53,7 +83,7 @@ getwd() # To check the current directory
 ```
 
 <details>
-<summary>Why do we change the working directory</summary>
+<summary>**Why do we change the working directory**</summary>
 The working directory is where RStudio is looking for files. Meaning we can easily type source('R/preprocessing.R') instead of the entire file path. There is nothing wrong with specifiying the entire file path and not changing the working directory. But for this workshop it makes it a lot easier, when we can all use the same code and this ensure that all code runs on your computer without having to change anything.
 </details>
 
@@ -66,7 +96,7 @@ source('R/preprocessing.R')
 
 
 # Preprocess WRIC data
-Now let's preprocess the txt files, that is created by the WRIC. The function `preproces_WRIC_file()`disentangles the meta-data at the top of the file (ID, comment etc) and creates DataFrames and csv-files with the actual data, seperated between both rooms and summarized between the two measurements for each room.
+Now let's preprocess the txt files, that is created by the WRIC. The function `preproces_WRIC_file()` disentangles the meta-data at the top of the file (ID, comment etc) and creates DataFrames and csv-files with the actual data, seperated between both rooms and summarized between the two measurements for each room.
 ```{r}
 result <- preprocess_WRIC_file("example_data/data.txt")
 R1_metadata <- result$R1_metadata
@@ -125,7 +155,8 @@ So now it is your turn. Using the `preprocess_WRIC_file()` method create a csv f
 One helpful feature of the `preprocess_WRIC_file()` method is to automatically extract the protocol from the note_file, that is filled in manually during the experiment. With "protocol" I mean coding wether the participant is currently sleeping, eating, exercising etc. This enables quick processing and easy access to extract and compare various e.g. eating periods. Let's try it:
 
 ```{r}
-result <- preprocess_WRIC_file("./example_data/data.txt", notefilepath="./example_data/note.txt")
+result <- preprocess_WRIC_file("./example_data/data.txt", 
+                            notefilepath="./example_data/note.txt")
 View(result$df_room1)
 ```
 When looking at `df_room1` now, we can see a new column called "protocol". We can see the file starts with 0 and at 22:41:21 changes to 1.
@@ -142,7 +173,7 @@ When specifying a notefilepath, the function will
 1) Check wether there is a time in the first row. If there is, this will be used to calculate the drift of the system. This drift will be added to all further datetimes you sepcify within the notefile.
 2) Check wether there is information about the partcipant entering or exiting the chamber. If yes, the data is cut to only include times in wich the participant is in the chamber.
 <details>
-<summary>What are the keywords for entering/exiting?</summary>
+<summary>**What are the keywords for entering/exiting?**</summary>
     start = c("ind i kammer", "enter", "ind", "entry")
     This is only checked in the first three rows. Reasoning behind it, is that the first shows the time drift and then there might be two rows - one for each participant - detailing their entry into the chamber.
 
@@ -180,7 +211,8 @@ Docstrings are text that explain what a function does, what parameter you can sp
 tryCatch({
   source("R/function_docs.R")
 }, error = function(e) {
-  cat("Documentation file 'function_docs.R' not found. Proceeding without documentation.\n")
+  cat("Documentation file 'function_docs.R' not found. 
+      Proceeding without documentation.\n")
 })
 
 # This part assigns the documentation imported above to each imported function
@@ -188,7 +220,8 @@ if (exists("function_docs", envir = .GlobalEnv)) {
   for (func_name in names(function_docs)) {
     if (exists(func_name, envir = .GlobalEnv)) {
       func <- get(func_name, envir = .GlobalEnv)
-      assign(func_name, structure(func, doc = function_docs[[func_name]]), envir = .GlobalEnv)    }
+      assign(func_name, structure(func, doc = function_docs[[func_name]]), 
+            envir = .GlobalEnv)    }
   }
 }
 ```
@@ -218,21 +251,25 @@ for (data_file in data_files) {
 When you also want to process note files with it, the code becomes a little bit more complex, since you want to make sure that the correct files are processed together. You can do this based on the shared date in the filename, or a more labour intensive, but maybe easier option is to create a list of filename pairs. Below you can see both options:
 
 ##### Option 1 - Pairs based on shared dates
-```{r, eval=FALSE}
+```{r}
 data_folder <- "./example_data/my_project"
 
-data_files <- list.files(data_folder, pattern = "^Results_.*_(\\d{12})\\.txt$", full.names = TRUE)
-note_files <- list.files(data_folder, pattern = "^note_(\\d{12})\\.txt$", full.names = TRUE)
+data_files <- list.files(data_folder, pattern = "^Results_.*_(\\d{12})\\.txt$", 
+                        full.names = TRUE)
+note_files <- list.files(data_folder, pattern = "^note_(\\d{12})\\.txt$", 
+                        full.names = TRUE)
 
 # Create a lookup table by extracting the 12-digit date from the filenames
-note_lookup <- setNames(note_files, sub("^(note_)(\\d{12})\\.txt$", "\\2", basename(note_files)))
+note_lookup <- setNames(note_files, sub("^(note_)(\\d{12})\\.txt$", "\\2", 
+                        basename(note_files)))
 
 # Loop through the data files and match the date with the note_lookup
 for (data_file in data_files) {
   date <- sub(".*_(\\d{12})\\.txt$", "\\1", basename(data_file))
   print(date)
   if (date %in% names(note_lookup)) {
-    preprocess_WRIC_file(data_file, notefilepath = note_lookup[date], path_to_save = data_folder, code = "id+comment")
+    preprocess_WRIC_file(data_file, notefilepath = note_lookup[date], 
+                          path_to_save = data_folder, code = "id+comment")
     message("Processed: ", data_file)
   }
 }
@@ -258,7 +295,9 @@ filename_pairs <- list(
 
 # Loop through the filename pairs and process them
 for (pair in filename_pairs) {
-  preprocess_WRIC_file(pair$data_file, notefilepath = pair$note_file, path_to_save = "./example_data/my_project", code = "id+comment")
+  preprocess_WRIC_file(pair$data_file, notefilepath = pair$note_file, 
+                        path_to_save = "./example_data/my_project", 
+                        code = "id+comment")
   message("Processed: ", pair$data_file, " and ", pair$note_file)
 }
 ```
@@ -278,21 +317,29 @@ Often you are interested in a certain time period (e.g. after eating or during e
 
 1) Import the preprocessed data (the csv-file) _You can skip this step, if you already have the data.frame, for example right after calling_ `preprocess_WRIC_files`.
 ```{r}
-data <- read.csv("./example_data/my_project/AB56_Visit 1_WRIC_data.csv") # If you followed the tutorial so far, you should have created this csv file in this location (otherwise go back to Batch Processing and execute the first code chunk or choose a different path
+data <- read.csv("./example_data/my_project/AB56_Visit 1_WRIC_data.csv") 
+# If you followed the tutorial so far, you should have created this csv file 
+# in this location (otherwise go back to Batch Processing and execute the first 
+# code chunk or choose a different path
 View(data)
 ```
 
 2) Let's extract the data that we are interested in. Let's start with the first time our participant is eating (breakfast) including one hour afterwards.
 ```{r}
-breakfast_index <- which(data$protocol == 2)[1] # we take the first (1) instance where the protocol is 2 (eating)
-data_breakfast <- data[breakfast_index:(breakfast_index + 59),] # we create a new data.frame where we take the next 60 rows, including the start_index
+# we take the first (1) instance where the protocol is 2 (eating)
+breakfast_index <- which(data$protocol == 2)[1] 
+print(breakfast_index)
+# we create a new data.frame where we take the next 60 rows, including the start_index
+data_breakfast <- data[breakfast_index:(breakfast_index + 59),] 
 View(data_breakfast) #Let's look at the data to check wether it worked correctly
 ```
 
 Maybe we want to compare RER after breakfast with RER after dinner. So let's extract the dinner time. As participants are eating for some time (e.g 15min) there are 15 rows where protocol is 2. So it would not work to just take the second instance, but we need to identify transitions from another number to 2 and then choose the second transition _(if this is something that is difficult and happens often, this could be a feature for the future?)_
 
 ```{r}
-dinner_index <- which(data$protocol == 2 & lag(data$protocol) != 2)[2] # we additionally check wether the row right before (lag) is not 2 and then take the second instance (2) to get the dinner time
+# we additionally check wether the row right before (lag) is not 2 and 
+# then take the second instance (2) to get the dinner time
+dinner_index <- which(data$protocol == 2 & lag(data$protocol) != 2)[2] 
 data_dinner <- data[dinner_index:(dinner_index + 59),]
 View(data_dinner) #Let's look at the data to check wether it worked correctly
 ```
@@ -324,6 +371,3 @@ for (file in files) {
 ```
 
 That concludes this tutorial. Now you know all basic functionalities of the package and are ready to use it in your own projects and with real data. Have fun!
-
-# Visualizing WRIC data
-Link to seperate tutorial
