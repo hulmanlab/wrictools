@@ -119,5 +119,14 @@ doc = "Generates documentation for a function in a structured format for easy re
 @param params List of parameters with descriptions.\n
 @param return_desc Description of the return value from the function.\n
 @return A character string containing formatted documentation for the specified function.\n
-@note Useful for creating consistent documentation for custom R functions."
+@note Useful for creating consistent documentation for custom R functions.",
+
+visualize_with_protocol = "Visualizes data from a CSV file with a specified plot type, optionally saving the plot as a PNG file.\n\n
+@param csv_file Path to the CSV file containing the data to be visualized.\n
+@param plot String specifying which variable to plot (default is \"RER\").\n
+@param protocol_colors_labels A data frame specifying protocol colors and labels (optional). If NULL, default values will be used.\n
+@param save_png Logical, whether to save the plot as a PNG file.\n
+@param path_to_save Directory path for saving the PNG file, NULL uses the current directory.\n
+@return A ggplot2 plot displaying the data with protocol highlighting, and optionally saves the plot as a PNG file."
+
 )

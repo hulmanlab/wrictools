@@ -15,7 +15,7 @@ This document serves as a guided tutorial for our workshop on **06.03.2025** at 
 Before we dive into the code-along session, please ensure you have the following installed:
 
 
--  **R**: The programming language we’ll be using for data analysis and visualization.
+- **R**: The programming language we’ll be using for data analysis and visualization.
 - **A Programming Environment (RStudio)**: I will demonstrate using RStudio, but feel free to use a different IDE.
 - **Quarto**: To render this tutorial, if you choose to go through it by yourself.
 
@@ -369,5 +369,42 @@ for (file in files) {
     t.test(data_breakfast$RER, data_dinner$RER, paired = TRUE)
 }
 ```
+
+# Visualizing
+TODO: Finish this!
+```{r}
+source("R/visualizations.R")
+```
+
+```{r}
+visualize_with_protocol("./example_data/my_project/AB56_Visit 1_WRIC_data.csv") # default is RER
+# visualize_with_protocol("./example_data/my_project/AB56_Visit 1_WRIC_data.csv", 
+#                         plot="Energy Expenditure (kcal/min)", 
+#                         protocol_colors_labels = protocol_colors_labels,
+#                         save_png = TRUE)
+```
+
+```{r}
+# Path to the folder containing the files
+folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+
+# Get all files ending with "_data.csv"
+csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
+dataframes <- list()
+
+protocol_colors_labels <- data.frame(
+  protocol = c(0, 1, 2, 3, 4),
+  color = c("white", "purple", "#4b3302", "#48c5a6", "#d0a4c6"),
+  label = c("Normal", "Something", "Nothing", "Exercise", "RER")
+)
+
+for (file in csv_files) {
+  #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
+  visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
+                          protocol_colors_labels = protocol_colors_labels,
+                          save_png = TRUE)
+}
+```
+
 
 That concludes this tutorial. Now you know all basic functionalities of the package and are ready to use it in your own projects and with real data. Have fun!

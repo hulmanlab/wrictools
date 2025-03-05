@@ -68,3 +68,25 @@ print("Done")
 #str(df_room1)
 
 ?extract_note_info
+
+# Example Usage
+
+# Path to the folder containing the files
+folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+
+# Get all files ending with "_data.csv"
+csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
+dataframes <- list()
+
+protocol_colors_labels <- data.frame(
+  protocol = c(0, 1, 2, 3, 4),
+  color = c("white", "purple", "#4b3302", "#48c5a6", "#d0a4c6"),
+  label = c("Normal", "Something", "Nothing", "Exercise", "RER")
+)
+
+for (file in csv_files) {
+  #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
+  visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
+                          protocol_colors_labels = protocol_colors_labels,
+                          save_png = TRUE)
+}

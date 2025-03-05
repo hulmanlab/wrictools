@@ -22,6 +22,7 @@ The code needs the following packages. You can easily install them with `install
 - [readr](https://readr.tidyverse.org/)
 - [RCurl](https://cran.r-project.org/web/packages/RCurl/index.html)
 - [stringr](https://stringr.tidyverse.org/)
+- [ggplot2](https://ggplot2.tidyverse.org/)
 
 ## Getting Started
 

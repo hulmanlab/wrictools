@@ -1,5 +1,6 @@
 import WRIC_preprocessing as wric
 import pandas as pd
+from config import config
 pd.options.mode.chained_assignment = None  # Disable the warning
 
 #TODO: Check wether without notefile start and end also throw an error (I think R specific handeling of null/nan differences)
@@ -51,10 +52,13 @@ treatments = [0, 1]
 #note_base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
 #path_to_save = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/processed"
 
-base_folder = "D:/Simon_CIRCLE/WRIC/"
-note_base_folder = "D:/Simon_CIRCLE/WRIC/Notes_Processed/"
-path_to_save = "D:/Simon_CIRCLE/WRIC/processed"
+# base_folder = "D:/Simon_CIRCLE/WRIC/"
+# note_base_folder = "D:/Simon_CIRCLE/WRIC/Notes_Processed/"
+# path_to_save = "D:/Simon_CIRCLE/WRIC/processed"
 
-for filepath, notepath in wric_dict.items():
-    print(filepath, notepath)
-    R1_metadata, R2_metadata, df_room1, df_room2 = wric.preprocess_WRIC_file(base_folder+filepath, code="id+comment", path_to_save=path_to_save, notefilepath=note_base_folder+notepath)
+# for filepath, notepath in wric_dict.items():
+#     print(filepath, notepath)
+#     R1_metadata, R2_metadata, df_room1, df_room2 = wric.preprocess_WRIC_file(base_folder+filepath, code="id+comment", path_to_save=path_to_save, notefilepath=note_base_folder+notepath)
+
+
+wric.upload_file_to_redcap("./example_data/data.txt", 1, "upload")
