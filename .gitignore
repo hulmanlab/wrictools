@@ -166,6 +166,7 @@ cython_debug/
 
 # Data Files
 .csv
+.png
 *.csv
 config.py
 config.r
