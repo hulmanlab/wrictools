@@ -65,7 +65,7 @@ If you prefer not to use Git, you can download the repository as a ZIP file:
 
   To get the latest changes from the repository navigate to your local repository. In your terminal, navigate to the directory where you cloned the repository and then pull Updates to get the latest updates (new features, bug fixes, etc.):
   ```{bash, eval=FALSE}
-  cd Docuents/wrictools #add your own path here
+  cd Documents/wrictools #add your own path here
   git pull origin main
   ```
 
@@ -371,22 +371,30 @@ for (file in files) {
 ```
 
 # Visualizing
-TODO: Finish this!
+Let's try to visualize the data highlighted by the protocol. First we need to import the script with visualization functions:
 ```{r}
 source("R/visualizations.R")
 ```
 
+Now we can try with one of our generated files:
 ```{r}
-visualize_with_protocol("./example_data/my_project/AB56_Visit 1_WRIC_data.csv") # default is RER
-# visualize_with_protocol("./example_data/my_project/AB56_Visit 1_WRIC_data.csv", 
-#                         plot="Energy Expenditure (kcal/min)", 
-#                         protocol_colors_labels = protocol_colors_labels,
-#                         save_png = TRUE)
+visualize_with_protocol("./example_data/my_project/AB56_Visit 2_WRIC_data.csv") 
+```
+We can see that it plotted RER (Respiratory Exchange Ratio) over time and highlighted the protocol. But what if we wanted to plot energy expenditure instead? To see all parameters we can specify, let's use the doc() function again.
+
+## <span style="color:green">Your Turn</span>
+
+1) Use the doc() function to find the parameters you can specify
+2) Try adjusting the protocol_colors_label parameters
+3) Iterate over all data-files in the my_project folder.
+
+```{r}
+doc("visualize_with_protocol")
 ```
 
 ```{r}
 # Path to the folder containing the files
-folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+folder_path <- "example_data/my_project"
 
 # Get all files ending with "_data.csv"
 csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
@@ -395,11 +403,10 @@ dataframes <- list()
 protocol_colors_labels <- data.frame(
   protocol = c(0, 1, 2, 3, 4),
   color = c("white", "purple", "#4b3302", "#48c5a6", "#d0a4c6"),
-  label = c("Normal", "Something", "Nothing", "Exercise", "RER")
+  label = c("Normal", "Something", "Nothing", "Third Thing", "?")
 )
 
 for (file in csv_files) {
-  #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
   visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
                           protocol_colors_labels = protocol_colors_labels,
                           save_png = TRUE)
