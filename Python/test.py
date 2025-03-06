@@ -48,17 +48,17 @@ wric_dict = {'01JJ_wric1min_v1_treat0.txt' : '01JJ_wric1min_v1_note_treat0.txt',
 
 ds = ["01JJ", "02LK", "03HA", "04HH", "05PM", "06ML", "07AB", "08MG", "09NQ", "10JK"]
 treatments = [0, 1]
-#base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/"
-#note_base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
-#path_to_save = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/"
+note_base_folder = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
+path_to_save = "/media/nina/SUNSHINE/Simon_CIRCLE/WRIC/processed"
 
-# base_folder = "D:/Simon_CIRCLE/WRIC/"
-# note_base_folder = "D:/Simon_CIRCLE/WRIC/Notes_Processed/"
-# path_to_save = "D:/Simon_CIRCLE/WRIC/processed"
+base_folder = "D:/Simon_CIRCLE/WRIC/"
+note_base_folder = "D:/Simon_CIRCLE/WRIC/Notes_Processed/"
+path_to_save = "D:/Simon_CIRCLE/WRIC/processed"
 
-# for filepath, notepath in wric_dict.items():
-#     print(filepath, notepath)
-#     R1_metadata, R2_metadata, df_room1, df_room2 = wric.preprocess_WRIC_file(base_folder+filepath, code="id+comment", path_to_save=path_to_save, notefilepath=note_base_folder+notepath)
+for filepath, notepath in wric_dict.items():
+    print(filepath, notepath)
+    R1_metadata, R2_metadata, df_room1, df_room2 = wric.preprocess_WRIC_file(base_folder+filepath, code="id+comment", path_to_save=path_to_save, notefilepath=note_base_folder+notepath)
 
 
 wric.upload_file_to_redcap("./example_data/data.txt", 1, "upload")

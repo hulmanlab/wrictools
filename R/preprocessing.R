@@ -287,7 +287,17 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
     row <- df_note[i, ]
     comment <- tolower(row$Comment)
     comment <- iconv(comment, to = "UTF-8")
-    participant <- ifelse(grepl("^1", comment), "1", ifelse(grepl("^2", comment), "2", c("1", "2")))
+    if (grepl("^1", comment)) {
+      participant <- "1"
+    } else if (grepl("^2", comment)) {
+      participant <- "2"
+    } else {
+      participant <- c("1", "2")  # Correctly assigns both participants
+    }
+
+    print(paste("Row:", i, "| Comment:", comment))
+    print(paste("Assigned participant:", participant))
+
 
     # Check for time drift in the first entry
     if (i == 1 && grepl(drift_pattern, row$Comment)) {
@@ -313,9 +323,11 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
           
           if (length(match) > 0) {
             new_datetime <- as.POSIXct(paste(as.Date(row$datetime), match), format = "%Y-%m-%d %H:%M")
-            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = new_datetime, protocol = value)))
+            timestamp <- new_datetime
+            #dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = new_datetime, protocol = value)))
           } else {
-            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = row$datetime, protocol = value)))
+            timestamp <- row$datetime
+            #dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = row$datetime, protocol = value)))
           }
         }
       } else {
@@ -325,18 +337,28 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
           
           if (length(match) > 0) {
             new_datetime <- as.POSIXct(paste(as.Date(row$datetime), match), format = "%Y-%m-%d %H:%M")
-            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = new_datetime, protocol = value)))
+            timestamp <- new_datetime
+            #dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = new_datetime, protocol = value)))
           } else {
-            dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = row$datetime, protocol = value)))
+            timestamp <- row$datetime
+            #dict_protocol[[participant]] <- append(dict_protocol[[participant]], list(list(timestamp = row$datetime, protocol = value)))
           }
         }
       }
+      for (p in participant) {
+        dict_protocol[[p]] <- append(dict_protocol[[p]], list(list(timestamp = timestamp, protocol = value)))
+      }
     }
   }
+  print("Final dict_protocol structure:")
+  print(str(dict_protocol))
 
   # Convert dict_protocol into a data frame and sort it
   protocol_list_1 <- do.call(rbind, lapply(dict_protocol[["1"]], function(x) data.frame(timestamp = x$timestamp, protocol = x$protocol)))
   protocol_list_2 <- do.call(rbind, lapply(dict_protocol[["2"]], function(x) data.frame(timestamp = x$timestamp, protocol = x$protocol)))
+
+  print(protocol_list_1)
+  print(protocol_list_2)
   
   # Sort by timestamp
   protocol_list_1 <- protocol_list_1[order(protocol_list_1$timestamp), ]

@@ -19,12 +19,17 @@
 # doc("extract_meta_data")
 # doc("preprocess_WRIC_file")
 
-# # no_comment_file = "/Users/au698484/Documents/data_wric_no_comment.txt"
-# result <- preprocess_WRIC_file("example_data/data.txt", path_to_save = "example_data/new_directory", notefilepath="example_data/note.txt")#, start="2023-11-13 11:43:00", end="2023-11-13 12:09:00") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
-# R1_metadata <- result$R1_metadata
-# R2_metadata <- result$R2_metadata
-# df_room1 <- result$df_room1
-# df_room2 <- result$df_room2
+source("R/preprocessing.R")
+
+# no_comment_file = "/Users/au698484/Documents/data_wric_no_comment.txt"
+result <- preprocess_WRIC_file("example_data/data.txt", notefilepath="example_data/note.txt")#, start="2023-11-13 11:43:00", end="2023-11-13 12:09:00") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
+R1_metadata <- result$R1_metadata
+R2_metadata <- result$R2_metadata
+df_room1 <- result$df_room1
+df_room2 <- result$df_room2
+
+print("Now the second task!")
+#TODO: Seperate problem: The drift row is asigned to partciipant 2? But not problem, right?
 
 # # str(df_room1)
 
@@ -68,6 +73,52 @@
 #str(df_room1)
 
 ?extract_note_info
+
+# processing of Simon's data 
+# TODO: Actually convert all the analysis done in Python into R and a coherent script
+
+# Define the dictionary as a named list
+wric_dict <- list(
+  "01JJ_wric1min_v1_treat0.txt" = "01JJ_wric1min_v1_note_treat0.txt", 
+  "01JJ_wric1min_v2_treat1.txt" = "01JJ_wric1min_v2_note_treat1.txt", 
+  "02LK_v2_treat0_wric1min_04HH_v2_treat1.txt" = "02LK_v2_treat0_wric1min_04HH_v2_treat1_note.txt", 
+  "02LK_wric1min_v1_treat1.txt" = "02LK_wric1min_v1_note_treat1.txt", 
+  "03HA_v1_treat1_wric1min_04HH_v1_treat0.txt" = "03HA_v1_treat1_wric1min_04HH_v1_treat0_note.txt", 
+  "03HA_wric1min_v2_treat0.txt" = "03HA_wric1min_v2_note_treat0.txt", 
+  # "05PM_wric1min_v1_treat0.txt" = "05PM_wric1min_v1_note_treat0.txt",  # Commented out
+  "05PM_wric1min_v2_treat1.txt" = "05PM_wric1min_v2_note_treat1.txt", 
+  "06ML_v2_treat1_wric1min_09NQ_v1_treat1.txt" = "06ML_v2_treat1_wric1min_09NQ_v1_treat1_note.txt", 
+  "06ML_wric1min_v1_treat0.txt" = "06ML_wric1min_v1_note_treat0.txt", 
+  "07AB_v1_treat1_wric1min_08MG_v2_treat0.txt" = "07AB_v1_treat1_wric1min_08MG_v2_treat0_note.txt", 
+  "07AB_wric1min_v2_treat0.txt" = "07AB_wric1min_v2_note_treat0.txt", 
+  "08MG_wric1min_v1_treat1.txt" = "08MG_wric1min_v1_note_treat1.txt", 
+  "09NQ_wric1min_v2_treat0.txt" = "09NQ_wric1min_v2_note_treat0.txt", 
+  "10JK_wric1min_v1_treat0.txt" = "10JK_wric1min_v1_note_treat0.txt", 
+  "10JK_wric1min_v2_treat1.txt" = "10JK_wric1min_v2_note_treat1.txt"
+)
+
+# Define folder paths
+base_folder <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/"
+note_base_folder <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
+path_to_save <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed/"
+
+# Iterate over the dictionary
+for (filepath in names(wric_dict)) {
+  notepath <- wric_dict[[filepath]]
+  print(paste(filepath, notepath))  # Print file paths
+  
+  # Call a hypothetical function equivalent to `wric.preprocess_WRIC_file`
+  result <- preprocess_WRIC_file(
+    paste0(base_folder, filepath),
+    code = "id+comment",
+    path_to_save = path_to_save,
+    notefilepath = paste0(note_base_folder, notepath)
+  )
+}
+
+
+
+
 
 # Example Usage
 
