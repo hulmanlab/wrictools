@@ -20,6 +20,7 @@
 # doc("preprocess_WRIC_file")
 
 source("R/preprocessing.R")
+source("R/visualizations.R")
 
 # no_comment_file = "/Users/au698484/Documents/data_wric_no_comment.txt"
 result <- preprocess_WRIC_file("example_data/data.txt", notefilepath="example_data/note.txt")#, start="2023-11-13 11:43:00", end="2023-11-13 12:09:00") # "C:/Documents/WRIC_example_data/Main_note_yyyymmddxxxx.txt"
@@ -28,10 +29,6 @@ R2_metadata <- result$R2_metadata
 df_room1 <- result$df_room1
 df_room2 <- result$df_room2
 
-print("Now the second task!")
-#TODO: Seperate problem: The drift row is asigned to partciipant 2? But not problem, right?
-
-# # str(df_room1)
 
 
 
@@ -102,46 +99,39 @@ base_folder <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/"
 note_base_folder <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/Notes_Processed/"
 path_to_save <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed/"
 
-# Iterate over the dictionary
-for (filepath in names(wric_dict)) {
-  notepath <- wric_dict[[filepath]]
-  print(paste(filepath, notepath))  # Print file paths
+# # Iterate over the dictionary
+# for (filepath in names(wric_dict)) {
+#   notepath <- wric_dict[[filepath]]
+#   print(paste(filepath, notepath))  # Print file paths
   
-  # Call a hypothetical function equivalent to `wric.preprocess_WRIC_file`
-  result <- preprocess_WRIC_file(
-    paste0(base_folder, filepath),
-    code = "id+comment",
-    path_to_save = path_to_save,
-    notefilepath = paste0(note_base_folder, notepath)
-  )
-}
-
-
-
-
-
-# # Example Usage
-
-# # Path to the folder containing the files
-# folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
-# # file <- "/Users/au698484/Documents/01JJ_v1_treat0_WRIC_data.csv"
-# # visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
-# #                         save_png = TRUE)
-
-
-# # Get all files ending with "_data.csv"
-# csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
-# dataframes <- list()
-
-# protocol_colors_labels <- data.frame(
-#   protocol = c(0, 1, 2, 3, 4),
-#   color = c("white", "purple", "#4b3302", "#48c5a6", "#d0a4c6"),
-#   label = c("Normal", "Something", "Nothing", "Exercise", "RER")
-# )
-
-# for (file in csv_files) {
-#   #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
-#   visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
-#                           protocol_colors_labels = protocol_colors_labels,
-#                           save_png = TRUE)
+#   # Call a hypothetical function equivalent to `wric.preprocess_WRIC_file`
+#   result <- preprocess_WRIC_file(
+#     paste0(base_folder, filepath),
+#     code = "id+comment",
+#     path_to_save = path_to_save,
+#     notefilepath = paste0(note_base_folder, notepath)
+#   )
 # }
+
+
+
+
+
+# Example Usage
+
+# Path to the folder containing the files
+folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+# file <- "/Users/au698484/Documents/01JJ_v1_treat0_WRIC_data.csv"
+# visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
+#                         save_png = TRUE)
+
+
+# Get all files ending with "_data.csv"
+csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
+dataframes <- list()
+
+for (file in csv_files) {
+  #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
+  visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", #"Energy Expenditure (kcal/min)"
+                          save_png = TRUE, path_to_save = "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/visualizations/")
+}

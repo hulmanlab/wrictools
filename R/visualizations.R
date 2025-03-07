@@ -33,8 +33,12 @@ visualize_with_protocol <- function(csv_file, plot = "RER", protocol_colors_labe
           x = "Relative Time (min)",
           y = plot) +
       theme_minimal() 
-      #coord_cartesian(ylim = c(0.5, 1.2)) #you can "zoom" the plot here
   
+  # If RER zoom to only physiologically possible values
+  if (plot == "RER") {
+    p <- p + coord_cartesian(ylim = c(0.5, 1.2))  # Zoom if plot is "RER"
+  }
+
   # Add protocol highlighting
   p <- p +
       geom_rect(data = df, aes(xmin = `relative_time`, 
@@ -55,7 +59,7 @@ visualize_with_protocol <- function(csv_file, plot = "RER", protocol_colors_labe
                             paste0(path_to_save, "/", file_name, "_", plot, "_plot.png"), 
                             paste0(file_name, "_", plot, "_plot.png"))
     print(plot_filename)
-    ggsave(plot_filename, plot = p, width = 8, height = 6, dpi = 300)
+    ggsave(plot_filename, plot = p, width = 12, height = 6, dpi = 600)
   }
 }
 

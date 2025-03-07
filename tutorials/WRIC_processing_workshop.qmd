@@ -415,5 +415,3 @@ for (file in csv_files) {
 
 
 That concludes this tutorial. Now you know all basic functionalities of the package and are ready to use it in your own projects and with real data. Have fun!
-
-This is a quick try.
