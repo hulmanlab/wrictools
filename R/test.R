@@ -120,28 +120,28 @@ for (filepath in names(wric_dict)) {
 
 
 
-# Example Usage
+# # Example Usage
 
-# Path to the folder containing the files
-folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
-# file <- "/Users/au698484/Documents/01JJ_v1_treat0_WRIC_data.csv"
-# visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
-#                         save_png = TRUE)
+# # Path to the folder containing the files
+# folder_path <- "/Volumes/SUNSHINE/Simon_CIRCLE/WRIC/processed"
+# # file <- "/Users/au698484/Documents/01JJ_v1_treat0_WRIC_data.csv"
+# # visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
+# #                         save_png = TRUE)
 
 
-# Get all files ending with "_data.csv"
-csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
-dataframes <- list()
+# # Get all files ending with "_data.csv"
+# csv_files <- list.files(folder_path, pattern = "_data.csv", full.names = TRUE)
+# dataframes <- list()
 
-protocol_colors_labels <- data.frame(
-  protocol = c(0, 1, 2, 3, 4),
-  color = c("white", "purple", "#4b3302", "#48c5a6", "#d0a4c6"),
-  label = c("Normal", "Something", "Nothing", "Exercise", "RER")
-)
+# protocol_colors_labels <- data.frame(
+#   protocol = c(0, 1, 2, 3, 4),
+#   color = c("white", "purple", "#4b3302", "#48c5a6", "#d0a4c6"),
+#   label = c("Normal", "Something", "Nothing", "Exercise", "RER")
+# )
 
-for (file in csv_files) {
-  #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
-  visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
-                          protocol_colors_labels = protocol_colors_labels,
-                          save_png = TRUE)
-}
+# for (file in csv_files) {
+#   #visualize_with_protocol(file) #plot="Energy Expenditure (kcal/min)"
+#   visualize_with_protocol(file, plot="Energy Expenditure (kcal/min)", 
+#                           protocol_colors_labels = protocol_colors_labels,
+#                           save_png = TRUE)
+# }

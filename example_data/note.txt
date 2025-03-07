@@ -28,5 +28,7 @@ Date	Time	Comment
 11/14/23	20:52:29	2 faerdig maaltid
 11/14/23	22:08:30	2 start exercise
 11/14/23	22:08:45	1 start step
+11/14/23	22:40:12	stop step
+11/14/23	23:02:05	i seng, sover
 11/15/23	06:35:48	1 ud
 11/15/23	06:44:36	2 exit
