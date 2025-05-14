@@ -11,13 +11,13 @@ library(readr)
 library(stringr)
 library(roxygen2)
 
-check_code <- function(code, manual, R1_metadata, R2_metadata) {
 #' Check the subject ID code and return corresponding Room 1 and Room 2 codes.
-#' 
+#'
 #' @param code Type of code to use: "id", "id+comment", or "manual".
 #' @param manual A list of custom codes for Room 1 and Room 2, required if `code` is "manual".
 #' @param R1_metadata, R2_metadata DataFrames for metadata of Room 1 and Room 2, containing "Subject ID" and "Comments".
 #' @return A list containing the codes for Room 1 and Room 2.
+check_code <- function(code, manual, R1_metadata, R2_metadata) {
   if (code == "id") {
     code_1 <- R1_metadata$`Subject.ID`[1]
     code_2 <- R2_metadata$`Subject.ID`[1]
@@ -33,15 +33,16 @@ check_code <- function(code, manual, R1_metadata, R2_metadata) {
   return(c(code_1, code_2))
 }
 
-extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
 #' Extracts metadata for two subjects from text lines and optionally saves it as CSV files.
-#' 
+#'
 #' @param lines List of strings containing the WRIC metadata.
 #' @param code Method for generating subject IDs ("id", "id+comment", or "manual").
 #' @param manual Custom codes for Room 1 and Room 2 subjects if `code` is "manual".
 #' @param save_csv Logical, whether to save extracted metadata to CSV files.
 #' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
 #' @return A list containing the Room 1 code, Room 2 code, and DataFrames for R1_metadata and R2_metadata.
+#' @export
+extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
   header_lines <- lapply(lines[4:7], function(line) unlist(strsplit(trimws(line), "\t")))
 
   # Standardize lengths to avoid errors - might have to rename your documents manually if there are eg IDs missing
@@ -60,28 +61,28 @@ extract_meta_data <- function(lines, code, manual, save_csv, path_to_save) {
 
   data_R1 <- setNames(as.list(header_lines[[2]]), header_lines[[1]][-1])
   data_R2 <- setNames(as.list(header_lines[[4]]), header_lines[[3]][-1])
-  
+
   R1_metadata <- as.data.frame(data_R1, stringsAsFactors = FALSE)
   R2_metadata <- as.data.frame(data_R2, stringsAsFactors = FALSE)
-  
+
   codes <- check_code(code, manual, R1_metadata, R2_metadata)
-  
+
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[1]], "_WRIC_metadata.csv"), paste0(codes[[1]], "_WRIC_metadata.csv"))
     room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", codes[[2]], "_WRIC_metadata.csv"), paste0(codes[[2]], "_WRIC_metadata.csv"))
     write.csv(R1_metadata, room1_filename, row.names = FALSE)
     write.csv(R2_metadata, room2_filename, row.names = FALSE)
   }
-  
+
   return(list(code_1 = codes[1], code_2 = codes[2], R1_metadata = R1_metadata, R2_metadata = R2_metadata))
 }
 
-open_file <- function(filepath) {
 #' Opens a WRIC .txt file and reads its contents.
-#' 
+#'
 #' @param filepath Path to the WRIC .txt file.
 #' @return A list of strings representing the lines of the file.
 #' @note Raises an error if the file is not a valid WRIC data file.
+open_file <- function(filepath) {
   if (!grepl("\\.txt$", tolower(filepath))) {
     stop("The file must be a .txt file.")
   }
@@ -92,14 +93,15 @@ open_file <- function(filepath) {
   return(lines)
 }
 
-add_relative_time <- function(df, start_time=NULL) {
 #' Add Relative Time in minutes to DataFrame. Rows before the start_time will be indicated negative.
 #'
 #' @param df A data frame containing a 'datetime' column.
-#' @param start_time Optional; the starting time for calculating relative time. 
+#' @param start_time Optional; the starting time for calculating relative time.
 #'                   Should be in a format compatible with POSIXct (eg. "2023-11-13 11:40:00")
 #' @return A data frame with an additional column 'relative_time[min]' indicating
 #'         the time in minutes from the start time.
+#' @export
+add_relative_time <- function(df, start_time=NULL) {
   if (is.null(start_time)) {
     start_time <- df$datetime[1]
   }
@@ -108,44 +110,44 @@ add_relative_time <- function(df, start_time=NULL) {
   return(df)
 }
 
+#' Filters rows in a DataFrame based on an optional start and end datetime range.
+#'
+#' @param df data.frame
+#'   DataFrame with a "datetime" column to filter.
+#' @param start character or POSIXct or NULL, optional;
+#'    Start datetime; rows before this will be removed. If NULL, uses the earliest datetime in the DataFrame.
+#' @param end character or POSIXct or NULL, optional
+#'   End datetime; rows after this will be removed. If NULL, uses the latest datetime in the DataFrame.
+#'
+#' @return data.frame
+#'   DataFrame with rows between the specified start and end dates, or the full DataFrame if both are NULL.
+#' @export
 cut_rows <- function(df, start = NULL, end = NULL) {
-  #' Filters rows in a DataFrame based on an optional start and end datetime range.
-  #'
-  #' @param df data.frame
-  #'   DataFrame with a "datetime" column to filter.
-  #' @param start character or POSIXct or NULL, optional; 
-  #'    Start datetime; rows before this will be removed. If NULL, uses the earliest datetime in the DataFrame.
-  #' @param end character or POSIXct or NULL, optional
-  #'   End datetime; rows after this will be removed. If NULL, uses the latest datetime in the DataFrame.
-  #'
-  #' @return data.frame
-  #'   DataFrame with rows between the specified start and end dates, or the full DataFrame if both are NULL.
-
   df$datetime <- as.POSIXct(df$datetime)
   if ((is.null(start) || is.na(start)) && (is.null(end) || is.na(end))){
-    return(df) 
+    return(df)
   } else if (is.na(start)) {
-    start <- min(df$datetime, na.rm = TRUE) 
+    start <- min(df$datetime, na.rm = TRUE)
   } else if (is.na(end)) {
     end <- max(df$datetime, na.rm = TRUE)
   }
   start <- as.POSIXct(start)
   end <- as.POSIXct(end)
-  
+
   return(df[df$datetime >= start & df$datetime <= end, ])
 }
 
+#' Helper function for extract_note_info() that updates the protocol column based on a data frame.
+#' Not intended for modular use.
 update_protocol <- function(df, protocol_list) {
-  # Helper function for extract_note_info() that updates the protocol column based on a data frame.
-  # Not intended for modular use.
   current_protocol <- 0
-  current_index <- 1 
-  
+  current_index <- 1
+
   # Ensure protocol_list is a data frame and check for empty data frame
   if (nrow(protocol_list) == 0) {
     return(df)  # If no protocols, return original DataFrame
   }
-  
+
   for (i in seq_len(nrow(df))) {
     # While there are more timestamps and the current row's datetime is greater than or equal to the timestamp
     while (current_index <= nrow(protocol_list) &&
@@ -153,28 +155,26 @@ update_protocol <- function(df, protocol_list) {
       current_protocol <- protocol_list[current_index, "protocol"]  # Update current protocol
       current_index <- current_index + 1  # Move to the next timestamp
     }
-    
+
     df$protocol[i] <- current_protocol
   }
-  
+
   return(df)
 }
 
+#' Helper function for extract_note_info() that updates a list based on parameters.
+#' Not intended for modular use.
 save_dict <- function(dict_protocol, participant, datetime, value) {
-  # Helper function for extract_note_info() that updates a list based on parameters.
-  # Not intended for modular use.
-  
   if (!is.null(participant)) {
     dict_protocol[[as.character(participant)]][[as.character(datetime)]] <- value
   } else {
     dict_protocol[["1"]][[as.character(datetime)]] <- value
     dict_protocol[["2"]][[as.character(datetime)]] <- value
   }
-  
+
   return(dict_protocol)
 }
 
-detect_start_end <- function(notes_path) {
 #' Automatically detect enter and exit from the chamber based on the notefile.
 #' Returns the start and end times for two participants.
 #'
@@ -182,27 +182,28 @@ detect_start_end <- function(notes_path) {
 #' @return list - A list of two elements ("1" and "2"), each containing a tuple (start, end) time.
 #'                Returns NA if not possible to find start or end time.
 #' @keywords chamber entry exit detection
-  
+#' @export
+detect_start_end <- function(notes_path) {
   keywords_dict <- list(
     end = c("ud", "exit", "out"),
     start = c("ind i kammer", "enter", "ind", "entry")
   )
-  
+
   # Read the note file and create a DataFrame
   notes_content <- readLines(notes_path)
   lines <- strsplit(notes_content[-c(1, 2)], "\t")
   df_note <- data.frame(matrix(unlist(lines), ncol = length(lines[[1]]), byrow = TRUE))
   colnames(df_note) <- unlist(lines[[1]])
   df_note <- na.omit(df_note)
-  
+
   # Combine to datetime
   df_note$datetime <- as.POSIXct(
     paste(df_note$Date, df_note$Time), format = "%m/%d/%y %H:%M:%S"
   )
   df_note <- df_note[, !(names(df_note) %in% c("Date", "Time"))]
-  
+
   start_end_times <- list("1" = c(NA, NA), "2" = c(NA, NA))
-  
+
   for (i in seq_len(nrow(df_note))) {
     comment <- tolower(df_note$Comment[i])
     participants <- if (grepl("^1", comment)) {
@@ -212,7 +213,7 @@ detect_start_end <- function(notes_path) {
     } else {
       c("1", "2")
     }
-    
+
     for (participant in participants) {
       if (is.na(start_end_times[[participant]][1]) &&
           any(grepl(paste(keywords_dict$start, collapse = "|"), comment))) {
@@ -236,8 +237,8 @@ detect_start_end <- function(notes_path) {
   return(start_end_times)
 }
 
+#' Helper Function to iterate over participant and append protocol value and timestamp to dictionary
 append_protocol_entry <- function(dict_protocol, participant, timestamp, value) {
-  #' Helper Function to iterate over participant and append protocol value and timestamp to dictionary
   for (p in participant) {
 
     dict_protocol[[p]] <- append(dict_protocol[[p]], list(list(timestamp = timestamp, protocol = value)))
@@ -245,33 +246,35 @@ append_protocol_entry <- function(dict_protocol, participant, timestamp, value) 
   return(dict_protocol)
 }
 
+
+#' Extracts and processes note information from a specified notes file, categorizing events
+#' based on predefined keywords, and updates two DataFrames with protocol information for
+#' different participants.
+#'
+#' @param notes_path string - The file path to the notes file containing event data.
+#' @param df_room1 DataFrame - DataFrame for participant 1, to be updated with protocol info.
+#' @param df_room2 DataFrame - DataFrame for participant 2, to be updated with protocol info.
+#' @param keywords_dict nested list - used to identify keywords to extract protocol values
+#' @return list - A list containing two updated DataFrames:
+#'         - `df_room1`: Updated DataFrame for participant 1 with protocol data.
+#'         - `df_room2`: Updated DataFrame for participant 2 with protocol data.
+#'
+#' @note
+#' - The 'Comment' field should start with '1' or '2' to indicate the participant,
+#'   or it may be empty to indicate both.
+#' - The `keywords_dict` can be modified to fit specific study protocols,
+#'   with multi-group checks for keyword matching.
+#' @export
 extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NULL) {
-  #' Extracts and processes note information from a specified notes file, categorizing events 
-  #' based on predefined keywords, and updates two DataFrames with protocol information for 
-  #' different participants.
-  #'
-  #' @param notes_path string - The file path to the notes file containing event data.
-  #' @param df_room1 DataFrame - DataFrame for participant 1, to be updated with protocol info.
-  #' @param df_room2 DataFrame - DataFrame for participant 2, to be updated with protocol info.
-  #' @param keywords_dict nested list - used to identify keywords to extract protocol values
-  #' @return list - A list containing two updated DataFrames:
-  #'         - `df_room1`: Updated DataFrame for participant 1 with protocol data.
-  #'         - `df_room2`: Updated DataFrame for participant 2 with protocol data.
-  #'
-  #' @note
-  #' - The 'Comment' field should start with '1' or '2' to indicate the participant, 
-  #'   or it may be empty to indicate both.
-  #' - The `keywords_dict` can be modified to fit specific study protocols, 
-  #'   with multi-group checks for keyword matching.
 
   # Define keywords dictionary
   if (is.null(keywords_dict)) {
     keywords_dict <- list(
-      sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep")), value = 1), 
-      eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2), 
-      stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "wake", "woken", "vaagnet")), value = 0), 
-      stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end ", "finished", "slut")), value = 0), 
-      activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3), 
+      sleeping = list(keywords = list(c("seng", "sleeping", "bed", "sove", "soeve", "godnat", "night", "sleep")), value = 1),
+      eating = list(keywords = list(c("start", "begin", "began"), c("maaltid", "måltid", "eat", "meal", "food", "spis", "maal", "måd", "mad", "frokost", "morgenmad", "middag", "snack", "aftensmad")), value = 2),
+      stop_sleeping = list(keywords = list(c("vaagen", "vågen", "vaekke", "væk", "wake", "woken", "vaagnet")), value = 0),
+      stop_anything = list(keywords = list(c("faerdig", "færdig", "stop", "end ", "finished", "slut")), value = 0),
+      activity = list(keywords = list(c("start", "begin", "began"), c("step", "exercise", "physical activity", "active", "motion", "aktiv")), value = 3),
       ree_start = list(keywords = list(c("start", "begin", "began"), c("REE", "BEE", "BMR", "RMR", "RER")), value = 4)
     )
   }
@@ -292,7 +295,7 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
   drift_pattern <- "^\\d{2}:\\d{2}(:\\d{2})?$"
   dict_protocol <- list("1" = list(), "2" = list())
   drift <- NULL
-  
+
   for (i in seq_len(nrow(df_note))) {
     row <- df_note[i, ]
     comment <- tolower(row$Comment)
@@ -313,7 +316,7 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
       }
       new_datetime <- as.POSIXct(paste(as.Date(row$datetime), row$Comment), format = "%Y-%m-%d %H:%M:%S")
       drift <- new_datetime - row$datetime
-      
+
       message("Drift: ", drift)
       if (!is.na(drift)){
         # Apply drift to dataframes (if not NA - something went wrong)
@@ -323,19 +326,19 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
       } else {
         print("Warning: The drift calculation resulted in a NA value and drift will not be applied going further!")
       }
-      
+
     }
 
     for (category in names(keywords_dict)) {
       entry <- keywords_dict[[category]]
       keywords <- entry$keywords
       value <- entry$value
-      
+
       if (length(keywords) > 1) {
         # Multi-group keyword check
         if (all(sapply(keywords, function(group) any(grepl(paste(group, collapse = "|"), comment, ignore.case = TRUE))))) {
           match <- regmatches(comment, regexpr(time_pattern, comment))
-          
+
           if (length(match) > 0) {
             new_datetime <- as.POSIXct(paste(as.Date(row$datetime), match), format = "%Y-%m-%d %H:%M")
             timestamp <- new_datetime
@@ -349,7 +352,7 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
         # Single-group keyword check
         if (any(sapply(keywords, function(group) any(grepl(paste(group, collapse = "|"), comment, ignore.case = TRUE))))) {
           match <- regmatches(comment, regexpr(time_pattern, comment))
-          
+
           if (length(match) > 0) {
             new_datetime <- as.POSIXct(paste(as.Date(row$datetime), match), format = "%Y-%m-%d %H:%M")
             timestamp <- new_datetime
@@ -369,7 +372,7 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
 
   print(protocol_list_1)
   print(protocol_list_2)
-  
+
   # Sort by timestamp
   protocol_list_1 <- protocol_list_1[order(protocol_list_1$timestamp), ]
   protocol_list_2 <- protocol_list_2[order(protocol_list_2$timestamp), ]
@@ -388,10 +391,8 @@ extract_note_info <- function(notes_path, df_room1, df_room2, keywords_dict = NU
 
 
 
-
-create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath) {
 #' Creates DataFrames for WRIC data from a file and optionally saves them as CSV files.
-#' 
+#'
 #' @param filepath Path to the WRIC .txt file.
 #' @param lines List of strings read from the file to locate the data start.
 #' @param save_csv Logical, whether to save DataFrames as CSV files.
@@ -399,17 +400,18 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
 #' @param path_to_save Directory path for saving CSV files, NULL uses the current directory.
 #' @return A list containing DataFrames for Room 1 and Room 2 measurements.
 #' @note Raises an error if Date or Time columns are inconsistent across rows.
-#' 
+#' @export
+create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath) {
 
   data_start_index <- which(grepl("^Room 1 Set 1", lines)) + 1
   df <- read_tsv(filepath, skip = data_start_index, col_names = FALSE)
-  
+
     # Drop columns with all NA values
   df <- df %>% select(where(~ !all(is.na(.))))
-  
+
   # Define new column names
-  columns <- c("Date", "Time", "VO2", "VCO2", "RER", "FiO2", "FeO2", "FiCO2", "FeCO2", "Flow", 
-               "Activity Monitor", "Energy Expenditure (kcal/min)", "Energy Expenditure (kJ/min)", 
+  columns <- c("Date", "Time", "VO2", "VCO2", "RER", "FiO2", "FeO2", "FiCO2", "FeCO2", "Flow",
+               "Activity Monitor", "Energy Expenditure (kcal/min)", "Energy Expenditure (kJ/min)",
                "Pressure Ambient", "Temperature", "Relative Humidity")
   new_columns <- c()
   for (set_num in c('S1', 'S2')) {
@@ -418,15 +420,15 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     }
   }
   colnames(df) <- new_columns
- 
+
   # Check for consistent Date and Time columns
   date_columns <- df %>% select(contains('Date'))
   time_columns <- df %>% select(contains('Time'))
-  if (!all(apply(date_columns, 1, function(x) length(unique(x)) == 1)) || 
+  if (!all(apply(date_columns, 1, function(x) length(unique(x)) == 1)) ||
       !all(apply(time_columns, 1, function(x) length(unique(x)) == 1))) {
     stop("Date or Time columns do not match in some rows")
   }
-  
+
   # Combine Date and Time to DateTime
   df <- df %>%
     mutate(
@@ -447,9 +449,9 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     select(contains('R2')) %>%
     mutate(datetime = df$datetime)
 
-  
-  
-  # Cut to only include desired rows (do before setting the relative time)    
+
+
+  # Cut to only include desired rows (do before setting the relative time)
   if (!is.null(start) && !is.null(end)) {
     df_room1 <- cut_rows(df_room1, start, end)
     df_room2 <- cut_rows(df_room2, start, end)
@@ -470,7 +472,7 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
     }
     df_room1 <- cut_rows(df_room1, start_1, end_1)
     df_room2 <- cut_rows(df_room2, start_2, end_2)
-    print(paste("Starting time for room 1 is", start_1, "and end", end_1, 
+    print(paste("Starting time for room 1 is", start_1, "and end", end_1,
                 "and for room 2 start is", start_2, "and end", end_2))
   } else {
     df_room1 <- cut_rows(df_room1, start, end)
@@ -478,42 +480,45 @@ create_wric_df <- function(filepath, lines, save_csv, code_1, code_2, path_to_sa
   }
   df_room1 <- add_relative_time(df_room1)
   df_room2 <- add_relative_time(df_room2)
-  
+
   return(list(df_room1 = df_room1, df_room2 = df_room2))
 }
 
-check_discrepancies <- function(df, threshold = 0.05, individual = FALSE) {
-#' @description Checks for discrepancies between S1 and S2 measurements in the DataFrame and prints them to the console.
-#' This function is not included in the big pre-processing function, as it is more intended to 
+#' Checks for discrepancies between S1 and S2 measurements in the DataFrame and prints them to the console.
+#' This function is not included in the big pre-processing function, as it is more intended to
 #' perform a quality check on your data and not to automatically inform the processing of the data.
+#'
 #' @param df DataFrame containing WRIC data with columns for S1 and S2 measurements.
 #' @param threshold Numeric threshold percentage for mean relative delta discrepancies (default 0.05).
 #' @param individual Logical, if TRUE checks and reports individual row discrepancies beyond the threshold (default FALSE).
 #' @return None. Prints discrepancies to the console.
+#' @export
+check_discrepancies <- function(df, threshold = 0.05, individual = FALSE) {
+
   env_params <- c('Pressure Ambient', 'Temperature', 'Relative Humidity', 'Activity Monitor')
   df_filtered <- df %>% select(-contains(env_params))
-  
+
   s1_columns <- df_filtered %>% select(contains('_S1_')) %>% names()
   s2_columns <- df_filtered %>% select(contains('_S2_')) %>% names()
-  
+
   discrepancies <- c()
-  
+
   for (i in seq_along(s1_columns)) {
     s1_values <- df[[s1_columns[i]]]
     s2_values <- df[[s2_columns[i]]]
     avg_values <- (s1_values + s2_values) / 2
-    
+
     relative_deltas <- (s1_values - s2_values) / avg_values
     mean_relative_delta <- mean(relative_deltas, na.rm = TRUE)
-    
+
     discrepancies <- c(discrepancies, sprintf("%s and %s have a mean relative delta of %.4f.", s1_columns[i], s2_columns[i], mean_relative_delta))
-    
+
     if (abs(mean_relative_delta) > (threshold / 100)) {
       discrepancies <- c(discrepancies, sprintf("%s and %s exceed the %.2f%% threshold.", s1_columns[i], s2_columns[i], threshold))
     } else {
       discrepancies <- c(discrepancies, sprintf("%s and %s are within the %.2f%% threshold.", s1_columns[i], s2_columns[i], threshold))
     }
-    
+
     if (individual) {
       for (j in seq_along(relative_deltas)) {
         if (abs(relative_deltas[j]) > (threshold / 100)) {
@@ -522,23 +527,24 @@ check_discrepancies <- function(df, threshold = 0.05, individual = FALSE) {
       }
     }
   }
-  
+
   cat(discrepancies, sep = "\n")
 }
 
-combine_measurements <- function(df, method = 'mean') {
 #' Combines S1 and S2 measurements in the DataFrame using the specified method.
-#' 
+#'
 #' @param df DataFrame containing WRIC data with S1 and S2 measurement columns.
 #' @param method String specifying the method to combine measurements ("mean", "median", "s1", "s2", "min", "max").
 #' @return A DataFrame with combined measurements.
+#' @export
+combine_measurements <- function(df, method = 'mean') {
   s1_columns <- df %>% select(contains('_S1_')) %>% names()
   s2_columns <- df %>% select(contains('_S2_')) %>% names()
   non_s_columns <- names(df)[!names(df) %in% c(s1_columns, s2_columns)]
-  
+
   combined <- df[, non_s_columns]
   combined <- as.data.frame(combined)
-  
+
   for (i in seq_along(s1_columns)) {
     if (method == 'mean') {
       combined_values <- (df[[s1_columns[i]]] + df[[s2_columns[i]]]) / 2
@@ -558,13 +564,12 @@ combine_measurements <- function(df, method = 'mean') {
     column_name <- sub("^.*?_S[12]_", "", s1_columns[i])
     combined[[column_name]] <- combined_values
   }
-  
+
   return(combined)
 }
 
-preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL, notefilepath = NULL, keywords_dict = NULL) {
 #' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
-#' 
+#'
 #' @param filepath Path to the WRIC .txt file.
 #' @param code Method for generating subject IDs ("id", "id+comment", or "manual").
 #' @param manual Custom codes for subjects in Room 1 and Room 2 if `code` is "manual".
@@ -577,6 +582,8 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
 #' @param notefilepath String, Directory path of the corresponding note file (.txt)
 #' @param keywords_dict Nested List, used to extract protocol values from note file
 #' @return A list containing the metadata and DataFrames for Room 1 and Room 2.
+#' @export
+preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL, notefilepath = NULL, keywords_dict = NULL) {
   lines <- open_file(filepath)
   result <- extract_meta_data(lines, code, manual, save_csv, path_to_save)
   R1_metadata <- result$R1_metadata
@@ -586,7 +593,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   result <- create_wric_df(filepath, lines, save_csv, code_1, code_2, path_to_save, start, end, notefilepath)
   df_room1 <- result$df_room1
   df_room2 <- result$df_room2
-  
+
   if (combine) {
     df_room1 <- combine_measurements(df_room1, method)
     df_room2 <- combine_measurements(df_room2, method)
@@ -597,7 +604,7 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
     df_room1 <- result$df_room1
     df_room2 <- result$df_room2
   }
-  
+
   if (save_csv) {
     room1_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_1, "_WRIC_data.csv"), paste0(code_1, "_WRIC_data.csv"))
     room2_filename <- ifelse(!is.null(path_to_save), paste0(path_to_save, "/", code_2, "_WRIC_data.csv"), paste0(code_2, "_WRIC_data.csv"))
@@ -608,13 +615,14 @@ preprocess_WRIC_file <- function(filepath, code = "id", manual = NULL, save_csv 
   return(list(R1_metadata = R1_metadata , R2_metadata = R2_metadata, df_room1 = df_room1, df_room2 = df_room2))
 }
 
-export_file_from_redcap <- function(record_id, fieldname, path = './tmp/export.raw.txt') {
 #' Exports a file from REDCap based on the specified record ID and field name.
-#' 
+#'
 #' @param record_id String containing the unique identifier for the record in REDCap.
 #' @param fieldname Field name from which to export the file.
 #' @param path File path where the exported file will be saved.
 #' @return None. The file is saved to the specified path.
+#' @export
+export_file_from_redcap <- function(record_id, fieldname, path = './tmp/export.raw.txt') {
 
   # avoid cross-plattform errors by setting the certificate globally
   download.file(url = "https://curl.se/ca/cacert.pem", destfile = "cacert.pem")
@@ -628,27 +636,28 @@ export_file_from_redcap <- function(record_id, fieldname, path = './tmp/export.r
     record=record_id,
     field=fieldname
   )
-  
+
   filepath <- if (!is.null(path)) path else "./tmp/export.raw.txt"
 
   f <- file(filepath, "wb")
   writeLines(result, f)
   close(f)
-  
+
 }
 
-upload_file_to_redcap <- function(filepath, record_id, fieldname) {
 #' Uploads a file to REDCap for a specified record ID and field name.
-#' 
+#'
 #' @param filepath Path to the file to be uploaded.
 #' @param record_id String containing the unique identifier for the record in REDCap.
 #' @param fieldname Field name to which the file will be uploaded.
 #' @return None. Prints the HTTP status code of the request.
- 
+#' @export
+upload_file_to_redcap <- function(filepath, record_id, fieldname) {
+
   # avoid cross-plattform errors by setting the certificate globally
   download.file(url = "https://curl.se/ca/cacert.pem", destfile = "cacert.pem")
   options(RCurlOptions = list(cainfo = "cacert.pem"))
-  
+
   file_content <- paste(readLines(filepath), collapse = "\n")
   result <- postForm(
     api_url,
@@ -662,10 +671,8 @@ upload_file_to_redcap <- function(filepath, record_id, fieldname) {
   )
 }
 
-preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NULL, 
-                                  save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL) {
 #' Preprocesses a WRIC data file, extracting metadata, creating DataFrames, and optionally saving results.
-#' 
+#'
 #' @param csv_file Path to the CSV file containing record IDs.
 #' @param fieldname The field name for exporting WRIC data.
 #' @param code Method for generating subject IDs ("id", "id+comment", or "manual").
@@ -677,20 +684,22 @@ preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NUL
 #' @param start character or POSIXct or NULL, rows before this will be removed, if NULL takes first row e.g "2023-11-13 11:43:00"
 #' @param end character or POSIXct or NULL, rows after this will be removed, if NULL takes last rows e.g "2023-11-13 11:43:00"
 #' @return A list where each key is a record ID and each value is a list with: (R1_metadata, R2_metadata, df_room1, df_room2).
-  
+#' @export
+preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NULL,
+                                  save_csv = TRUE, path_to_save = NULL, combine = TRUE, method = "mean", start = NULL, end = NULL) {
   # Read record IDs from CSV
   record_ids <- read_csv(csv_file, col_names = FALSE)$X1
-  
+
   # Initialize list to store data for each record ID
   dataframes <- list()
-  
+
   for (record_id in record_ids) {
     # Assume export_file_from_redcap is a defined function
     export_file_from_redcap(record_id, fieldname)
-    
+
     # Call preprocess_WRIC_file function (this should be defined elsewhere)
     result <- preprocess_WRIC_file("./tmp/export.raw.txt", code, manual, save_csv, path_to_save, combine, method, start, end)
-    
+
     # Store the results for the record ID
     dataframes[[as.character(record_id)]] <- list(
       R1_metadata = result$R1_metadata,
@@ -699,31 +708,31 @@ preprocess_WRIC_files <- function(csv_file, fieldname, code = "id", manual = NUL
       df_room2 = result$df_room2
     )
   }
-  
+
   return(dataframes)
 }
 
-doc <- function(func_name) {
-#' Returns the documentation for this function from the function_docs.R file. This is a temporary option, until this is made into a package.
-#' 
-#' @param funcname String, name of the function
-  func <- get(func_name, envir = .GlobalEnv)
-  doc <- attr(func, "doc")
-  if (!is.null(doc)) {
-    cat(doc, "\n")
-  } else {
-    cat("No documentation available.\n")
-  }
-}
-
-
-# Dynamically attach documentation to all functions (if doc_strings is available)
-if (exists("doc_strings", envir = .GlobalEnv)) {
-  print(doc_strings)
-  for (func_name in names(doc_strings)) {
-    if (exists(func_name, envir = .GlobalEnv)) {
-      func <- get(func_name, envir = .GlobalEnv)
-      attr(func, "doc") <- doc_strings[[func_name]]
-    }
-  }
-}
+#' doc <- function(func_name) {
+#' #' Returns the documentation for this function from the function_docs.R file. This is a temporary option, until this is made into a package.
+#' #'
+#' #' @param funcname String, name of the function
+#'   func <- get(func_name, envir = .GlobalEnv)
+#'   doc <- attr(func, "doc")
+#'   if (!is.null(doc)) {
+#'     cat(doc, "\n")
+#'   } else {
+#'     cat("No documentation available.\n")
+#'   }
+#' }
+#'
+#'
+#' # Dynamically attach documentation to all functions (if doc_strings is available)
+#' if (exists("doc_strings", envir = .GlobalEnv)) {
+#'   print(doc_strings)
+#'   for (func_name in names(doc_strings)) {
+#'     if (exists(func_name, envir = .GlobalEnv)) {
+#'       func <- get(func_name, envir = .GlobalEnv)
+#'       attr(func, "doc") <- doc_strings[[func_name]]
+#'     }
+#'   }
+#' }

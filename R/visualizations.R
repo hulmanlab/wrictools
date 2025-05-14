@@ -20,7 +20,7 @@ visualize_with_protocol <- function(csv_file, plot = "RER", protocol_colors_labe
     protocol_colors_labels <- data.frame(
       protocol = c(0, 1, 2, 3, 4),
       color = c("white", "blue", "orange", "yellow", "green"),
-      label = c("Normal", "Sleep", "Eating", "Exercise", "RER")
+      label = c("Normal", "Sleep", "Eating", "Exercise", "REE")
     )
   }
   df <- read_csv(csv_file, show_col_types = FALSE)

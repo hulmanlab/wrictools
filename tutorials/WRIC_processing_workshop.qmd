@@ -91,7 +91,7 @@ The working directory is where RStudio is looking for files. Meaning we can easi
 - `source()` runs an R script and loads its functions into your environment
 
 ```{r}
-source('R/preprocessing.R')
+source("R/preprocessing.R")
 ```
 
 
