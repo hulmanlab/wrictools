@@ -1,4 +1,5 @@
-This is an outdated version of the wrictools package in R. This repository contains the corresponding Python code, which will not be updated or supported. For the up-to-date R package, please go to [wrictools](https://github.com/NinaZiegenbein/wrictools) or install from CRAN.
+# WARNING
+This is an **outdated version** of the wrictools package in R. This repository contains the corresponding Python code, which will not be updated or supported. For the up-to-date R package, please go to [wrictools](https://github.com/NinaZiegenbein/wrictools) or install from CRAN.
 
 # WRIC Tools
 This repository contains functions, tutorials and examples to (pre)process and analyse the data from the whole room indirect calorimeter by Maastricht Instruments using the OmniCal software. 
